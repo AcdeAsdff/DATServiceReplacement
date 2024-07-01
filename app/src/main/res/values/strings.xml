@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">DATServiceReplacement</string>
+    <string-array name="scope">
+        <item>android</item>
+        <item>system</item>
+        <item>com.android.bluetooth</item>
+        <item>com.android.launcher3</item>
+        <item>com.android.server.telecom</item>
+    </string-array>
+</resources>
