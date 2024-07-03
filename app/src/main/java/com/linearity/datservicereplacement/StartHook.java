@@ -1,14 +1,14 @@
 package com.linearity.datservicereplacement;
 
-import static com.linearity.FakeServices.hookIPackageManager.EMPTY_PACKAGE_INFO;
-import static com.linearity.FakeServices.hookIPackageManager.IThinkShouldFilterApplication;
-import static com.linearity.FakeServices.hookIPackageManager.hookGetPackageInfo;
-import static com.linearity.FakeServices.hookIPackageManager.isSystemApp;
-import static com.linearity.FakeServices.hookIPackageManager.nonSysPackages;
-import static com.linearity.FakeServices.hookIPackageManager.nonSysPackagesByName;
-import static com.linearity.FakeServices.hookIPackageManager.pm;
-import static com.linearity.FakeServices.hookIPackageManager.sysPackages;
-import static com.linearity.FakeServices.hookIPackageManager.sysPackagesByName;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.EMPTY_PACKAGE_INFO;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.IThinkShouldFilterApplication;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.hookGetPackageInfo;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.nonSysPackages;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.nonSysPackagesByName;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.pm;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.sysPackages;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.sysPackagesByName;
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_STRING_ARRAY;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.LoggerUtils.showObjectFields;
@@ -23,8 +23,11 @@ import android.content.pm.PackageInfo;
 import android.os.Binder;
 import android.os.Bundle;
 
+import com.linearity.datservicereplacement.Battery.HookIBatteryStats;
 import com.linearity.datservicereplacement.Bluetooth.HookBluetooth;
+import com.linearity.datservicereplacement.Clipboard.HookIClipboard;
 import com.linearity.datservicereplacement.InputMethod.HookInputMethod;
+import com.linearity.datservicereplacement.PowerManager.HookIPowerStatsService;
 import com.linearity.datservicereplacement.Telecom.HookTelecomService;
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.FakeInfo.ExpectInfo;
@@ -744,6 +747,9 @@ public class StartHook implements IXposedHookLoadPackage {
         HookBluetooth.doHook(lpparam);
         HookInputMethod.doHook(lpparam);
         HookTelecomService.doHook(lpparam);
+        HookIClipboard.doHook(lpparam);
+        HookIPowerStatsService.doHook(lpparam);
+        HookIBatteryStats.doHook(lpparam);
 
 //        MessageFinder.hookMessage(lpparam);
 

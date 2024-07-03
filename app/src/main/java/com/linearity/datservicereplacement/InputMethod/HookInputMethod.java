@@ -1,9 +1,8 @@
 package com.linearity.datservicereplacement.InputMethod;
 
-import static com.linearity.FakeServices.hookIPackageManager.getPackageName;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.getPackageName;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_ReturnObjIfNonSys;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_executeIfNonSys;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.executorNopArg;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
@@ -16,13 +15,11 @@ import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodSubtype;
 
 import com.linearity.utils.ExtendedRandom;
-import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 

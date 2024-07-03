@@ -3,7 +3,7 @@ package com.linearity.datservicereplacement.Telecom;
 import static android.telecom.PhoneAccount.SCHEME_SIP;
 import static android.telecom.PhoneAccount.SCHEME_TEL;
 import static android.telecom.PhoneAccount.SCHEME_VOICEMAIL;
-import static com.linearity.FakeServices.hookIPackageManager.getPackageName;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.getPackageName;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.ParceledListSliceClass;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_ReturnObjIfNonSys;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_executeIfNonSys;
@@ -23,7 +23,6 @@ import com.linearity.utils.NotFinished;
 import com.linearity.utils.SimpleExecutorWithMode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;

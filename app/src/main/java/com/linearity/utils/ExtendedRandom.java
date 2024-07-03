@@ -1,6 +1,6 @@
 package com.linearity.utils;
 
-import static com.linearity.FakeServices.hookIPackageManager.getPackageName;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.getPackageName;
 import static com.linearity.datservicereplacement.Bluetooth.BluetoothUuid.UUID_BYTES_128_BIT;
 import static com.linearity.datservicereplacement.Bluetooth.BluetoothUuid.UUID_BYTES_16_BIT;
 import static com.linearity.datservicereplacement.Bluetooth.BluetoothUuid.UUID_BYTES_32_BIT;
@@ -34,7 +34,8 @@ public class ExtendedRandom{
     /**
      * set to non-zero to confuse app.
      */
-    public static final long seedOffset = 0;
+    public static final long seedOffset = 0x39c5bb;
+    public static final ExtendedRandom SYSTEM_INSTANCE = new ExtendedRandom(ExtendedRandom.seedOffset);
     private Random random;
     private final long seed;
     public ExtendedRandom(){
@@ -73,6 +74,13 @@ public class ExtendedRandom{
         int[] result = new int[length];
         for (int i=0;i<length;i++){
             result[i] = random.nextInt();
+        }
+        return result;
+    }
+    public long[] nextLongArr(int length,int bound){
+        long[] result = new long[length];
+        for (int i=0;i<length;i++){
+            result[i] = random.nextInt(bound);
         }
         return result;
     }

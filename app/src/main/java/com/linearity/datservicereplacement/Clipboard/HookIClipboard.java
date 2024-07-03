@@ -37,7 +37,6 @@ public class HookIClipboard {
         hookAllMethodsWithCache_Auto(hookClass,"setPrimaryClip",null);
         hookAllMethodsWithCache_Auto(hookClass,"setPrimaryClipAsPackage",null);
         hookAllMethodsWithCache_Auto(hookClass,"clearPrimaryClip",null);
-
         hookAllMethodsWithCache_Auto(hookClass,"getPrimaryClip",fakeClipData);
         hookAllMethodsWithCache_Auto(hookClass,"getPrimaryClipDescription",new ClipDescription("",new String[]{}));
         hookAllMethodsWithCache_Auto(hookClass,"hasPrimaryClip",true);
@@ -47,5 +46,6 @@ public class HookIClipboard {
         hookAllMethodsWithCache_Auto(hookClass,"getPrimaryClipSource",null);
         hookAllMethodsWithCache_Auto(hookClass,"areClipboardAccessNotificationsEnabledForUser",true);
         hookAllMethodsWithCache_Auto(hookClass,"setClipboardAccessNotificationsEnabledForUser",null);
+
     }
 }

@@ -1,4 +1,4 @@
-package com.linearity.FakeServices;
+package com.linearity.datservicereplacement.PackageManager;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
 import static com.linearity.datservicereplacement.StartHook.IPackageManagers;

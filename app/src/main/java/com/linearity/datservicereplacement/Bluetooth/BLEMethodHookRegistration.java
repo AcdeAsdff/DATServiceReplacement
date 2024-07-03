@@ -1,6 +1,6 @@
 package com.linearity.datservicereplacement.Bluetooth;
 
-import static com.linearity.FakeServices.hookIPackageManager.isSystemApp;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
 import static com.linearity.datservicereplacement.Bluetooth.AppBLERegistration.START_SCAN;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 
@@ -10,14 +10,11 @@ import android.bluetooth.le.ScanSettings;
 import android.content.AttributionSource;
 import android.os.Binder;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;

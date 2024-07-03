@@ -1,6 +1,6 @@
 package com.linearity.datservicereplacement.Bluetooth;
 
-import static com.linearity.FakeServices.hookIPackageManager.isSystemApp;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYLIST;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyArrListIfNonSys;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeBluetoothMacAddrIfNonSys;

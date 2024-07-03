@@ -1,8 +1,8 @@
 package com.linearity.datservicereplacement;
 
-import static com.linearity.FakeServices.hookIPackageManager.getPackageName;
-import static com.linearity.FakeServices.hookIPackageManager.isSystemApp;
-import static com.linearity.FakeServices.hookIPackageManager.nonSysPackages;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.getPackageName;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.nonSysPackages;
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_INT_ARRAY;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
@@ -948,6 +948,11 @@ public class ReturnIfNonSys {
     }
 
     public static void hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object){
+        if (object == null){
+            hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, null);
+            return;
+        }
+
         if (object instanceof SimpleExecutorWithMode){
             hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode) object);
         }else {
