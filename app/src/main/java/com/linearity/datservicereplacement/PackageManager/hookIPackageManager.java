@@ -239,6 +239,7 @@ public class hookIPackageManager {
         return false;
     }
 
+    //get package name for uid
     // return "";if not found || isSystemApp
     public static String getPackageName(int callingUid){
         if (isSystemApp(callingUid)){

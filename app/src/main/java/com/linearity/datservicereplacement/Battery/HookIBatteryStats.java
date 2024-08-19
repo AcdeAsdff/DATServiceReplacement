@@ -28,7 +28,7 @@ public class HookIBatteryStats {
         Class<?> hookClass;
         hookClass = XposedHelpers.findClassIfExists("com.android.server.am.BatteryStatsService",lpparam.classLoader);
         if (hookClass != null){
-
+            hookIBatteryStats(hookClass);
         }
     }
     static int len = SYSTEM_INSTANCE.nextInt(5)+1;

@@ -1,6 +1,9 @@
 package com.linearity.datservicereplacement.Clipboard;
 
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.getPackageName;
+import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
+import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 
 import android.content.ClipData;
@@ -26,6 +29,7 @@ public class HookIClipboard {
     public static void hookIClipboard(Class<?> hookClass){
         SimpleExecutorWithMode fakeClipData = new SimpleExecutorWithMode(MODE_BEFORE,param->{
             ExtendedRandom extendedRandom = ExtendedRandom.generateBasicFromUid(Binder.getCallingUid(),"IClipboard");
+            LoggerLog(new Exception("returning fake clipdata for:" + getPackageName(Binder.getCallingUid()) + Binder.getCallingUid()));
 
             param.setResult(
                     new ClipData(new ClipDescription("",new String[]{}),
@@ -34,8 +38,8 @@ public class HookIClipboard {
             );
         });
 
-        hookAllMethodsWithCache_Auto(hookClass,"setPrimaryClip",null);
-        hookAllMethodsWithCache_Auto(hookClass,"setPrimaryClipAsPackage",null);
+//        hookAllMethodsWithCache_Auto(hookClass,"setPrimaryClip",null);
+//        hookAllMethodsWithCache_Auto(hookClass,"setPrimaryClipAsPackage",null);
         hookAllMethodsWithCache_Auto(hookClass,"clearPrimaryClip",null);
         hookAllMethodsWithCache_Auto(hookClass,"getPrimaryClip",fakeClipData);
         hookAllMethodsWithCache_Auto(hookClass,"getPrimaryClipDescription",new ClipDescription("",new String[]{}));

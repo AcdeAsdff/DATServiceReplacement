@@ -6,8 +6,11 @@ import static com.linearity.datservicereplacement.PackageManager.hookIPackageMan
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_INT_ARRAY;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
+import static com.linearity.utils.SimpleExecutor.MODE_AFTER_NO_CHECK;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE_AND_AFTER;
+import static com.linearity.utils.SimpleExecutor.MODE_BEFORE_AND_AFTER_NO_CHECK;
+import static com.linearity.utils.SimpleExecutor.MODE_BEFORE_NO_CHECK;
 
 import android.content.AttributionSource;
 import android.content.pm.ApplicationInfo;
@@ -178,6 +181,7 @@ public class ReturnIfNonSys {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
+                        if (isSystemApp(Binder.getCallingUid())){return;}
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
                 };
@@ -185,6 +189,7 @@ public class ReturnIfNonSys {
                 return new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        if (isSystemApp(Binder.getCallingUid())){return;}
                         super.afterHookedMethod(param);
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
@@ -194,12 +199,48 @@ public class ReturnIfNonSys {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
+                        if (isSystemApp(Binder.getCallingUid())){return;}
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         super.afterHookedMethod(param);
+                        if (isSystemApp(Binder.getCallingUid())){return;}//fixed clipboard not working
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    }
+                };
+            case MODE_BEFORE_NO_CHECK:
+                return new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        super.beforeHookedMethod(param);
+//                        if (isSystemApp(Binder.getCallingUid())){return;}
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    }
+                };
+            case MODE_AFTER_NO_CHECK:
+                return new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        if (isSystemApp(Binder.getCallingUid())){return;}
+                        super.afterHookedMethod(param);
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    }
+                };
+            case MODE_BEFORE_AND_AFTER_NO_CHECK:
+                return new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        super.beforeHookedMethod(param);
+//                        if (isSystemApp(Binder.getCallingUid())){return;}
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    }
+
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        super.afterHookedMethod(param);
+                        if (isSystemApp(Binder.getCallingUid())){return;}//fixed clipboard not working
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
                 };
@@ -208,6 +249,7 @@ public class ReturnIfNonSys {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
+                        if (isSystemApp(Binder.getCallingUid())){return;}//fixed clipboard not working
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
                 };
