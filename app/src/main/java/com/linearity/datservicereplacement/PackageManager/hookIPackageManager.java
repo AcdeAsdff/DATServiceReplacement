@@ -254,6 +254,10 @@ public class hookIPackageManager {
         }
         return "";
     }
+
+    /**
+     when return true:do not show
+     */
     public static boolean IThinkShouldFilterApplication(int callingUid, @Nullable Object /*SettingBase*/ callingSetting,
                                            Object /*PackageSetting*/ targetPkgSetting, int userId){
         if (callingUid==1000 || callingUid==1001 || callingSetting == null || targetPkgSetting == null){return false;}
@@ -270,14 +274,21 @@ public class hookIPackageManager {
             if (!callingPackageName.contains("lineage") && targetPackageName.contains("lineage")){
                 return true;
             }
+            /**
+             * expose some package so that i can login with them.
+             * (i hate monopoly capital :( )
+             */
+            if (targetPackageName.contains("com.tencent.mm")
+                    || targetPackageName.contains("com.tencent.tim")
+                    || targetPackageName.startsWith("com.alipay")
+            ){
+                return false;
+            }
+
             if ((boolean)XposedHelpers.callMethod(targetPkgSetting,"isSystem")){
                 return false;
             }
-////            LoggerLog(callingUid);
-//            LoggerLog(callingPackageName);
-//            LoggerLog(targetPkgSetting);
-////            LoggerLog(userId);
-//            LoggerLog("-------------");
+
             return true;
         }
         return false;
