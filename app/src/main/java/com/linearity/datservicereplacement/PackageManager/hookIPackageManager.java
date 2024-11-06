@@ -280,7 +280,8 @@ public class hookIPackageManager {
              */
             if (targetPackageName.contains("com.tencent.mm")
                     || targetPackageName.contains("com.tencent.tim")
-                    || targetPackageName.startsWith("com.alipay")
+                    || targetPackageName.contains("alipay")
+                    || targetPackageName.contains("Alipay")
             ){
                 return false;
             }

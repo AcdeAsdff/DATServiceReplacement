@@ -23,10 +23,13 @@ import android.content.pm.PackageInfo;
 import android.os.Binder;
 import android.os.Bundle;
 
+import com.linearity.datservicereplacement.AppOps.HookAppOpsService;
 import com.linearity.datservicereplacement.Battery.HookIBatteryStats;
 import com.linearity.datservicereplacement.Bluetooth.HookBluetooth;
 import com.linearity.datservicereplacement.Clipboard.HookIClipboard;
 import com.linearity.datservicereplacement.InputMethod.HookInputMethod;
+import com.linearity.datservicereplacement.Location.HookLocationManager;
+import com.linearity.datservicereplacement.Permission.HookPermissionManagerService;
 import com.linearity.datservicereplacement.PowerManager.HookIPowerStatsService;
 import com.linearity.datservicereplacement.Telecom.HookTelecomService;
 import com.linearity.utils.ExtendedRandom;
@@ -240,6 +243,49 @@ public class StartHook implements IXposedHookLoadPackage {
                 }
             });
         }
+
+//        hookClass = XposedHelpers.findClassIfExists("com.android.server.wm.ClientLifecycleManager",lpparam.classLoader);
+//        if (hookClass != null){
+//            try {
+//                Class<?> transactionClass = XposedHelpers.findClass("android.app.servertransaction.ClientTransaction",lpparam.classLoader);
+//                XposedHelpers.findAndHookMethod(hookClass, "scheduleTransaction", transactionClass, new XC_MethodHook() {
+//                    @Override
+//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                        super.beforeHookedMethod(param);
+//                        try{
+//                            Object mLifecycleStateRequest = XposedHelpers.getObjectField(param.args[0],"mLifecycleStateRequest");
+//                            if (mLifecycleStateRequest == null){return;}
+//                            String className = mLifecycleStateRequest.getClass().getName();
+//                            if (className.contains("ResumeActivityItem") || className.contains("PauseActivityItem")){
+//
+//                            }
+//                        }catch (Exception e){
+//                            LoggerLog(e);
+//                        }
+//                    }
+//                });
+//            }catch (Exception e){
+//                LoggerLog(e);
+//            }
+//        }
+
+//        hookClass = XposedHelpers.findClassIfExists("android.app.ActivityThread",lpparam.classLoader);
+//        if (hookClass != null){
+//            XposedBridge.hookAllMethods(hookClass, "performResumeActivity", new XC_MethodHook() {
+//                @Override
+//                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                    super.beforeHookedMethod(param);
+//                    try {
+//                        Object mActivityClientRecord = param.args[0];
+//                        /*LoadedApk*/Object packageInfo = XposedHelpers.getObjectField(mActivityClientRecord,"packageInfo");
+//                        String mPackageName = (String) XposedHelpers.getObjectField(packageInfo,"mPackageName");
+//                        LoggerLog(mPackageName + " | onResume");
+//                    }catch (Exception e){
+//                        LoggerLog(e);
+//                    }
+//                }
+//            });
+//        }
 
         if (false){
             hookClass = XposedHelpers.findClassIfExists("android.os.Binder", lpparam.classLoader);
@@ -750,6 +796,9 @@ public class StartHook implements IXposedHookLoadPackage {
         HookIClipboard.doHook(lpparam);
         HookIPowerStatsService.doHook(lpparam);
         HookIBatteryStats.doHook(lpparam);
+//        HookPermissionManagerService.doHook(lpparam);
+        HookAppOpsService.doHook(lpparam);
+//        HookLocationManager.doHook(lpparam);
 
 //        MessageFinder.hookMessage(lpparam);
 
@@ -850,7 +899,6 @@ public class StartHook implements IXposedHookLoadPackage {
         if (hookClass != null){
             hookAMS(hookClass);
         }
-
 //        hookClass = XposedHelpers.findClassIfExists("android.app.ContextImpl",lpparam.classLoader);
 //        if (hookClass != null){
 //            hookContextImpl(hookClass);
@@ -917,7 +965,6 @@ public class StartHook implements IXposedHookLoadPackage {
 //                }
 //            });
 //        }
-
 
     }
 
@@ -1017,13 +1064,6 @@ public class StartHook implements IXposedHookLoadPackage {
         try {
             //maybe i should call getprop to decide the value for resetprop
             Shell.getShell().newJob().add("su").exec();
-//            strs = new String[]{
-//                    "ro.build.version.all_codenames","ro.build.version.codename",
-//                    "ro.build.version.preview_sdk_fingerprint",
-//            };
-//            for (String s:strs){
-//                Shell.getShell().newJob().add("resetprop -n "+s+" QAQ").exec();
-//            }
 
             String buildProductBackup = Shell.getShell().newJob().add("getprop ro.build.product.backup").exec().getOut().get(0);
             if (buildProductBackup != null){
@@ -1066,7 +1106,10 @@ public class StartHook implements IXposedHookLoadPackage {
         }
         List<String> resultList = new LinkedList<>();
         for (String s:strings){
-            if (s.startsWith("com.tencent") || s.startsWith("com.alipay")){
+            if (s.startsWith("com.tencent")
+                    || s.contains("alipay")
+                    || s.contains("Alipay")
+            ){
                 resultList.add(s);
             }else if(changedSelf && self != null){
                 if(self.equals(s)){
@@ -1086,7 +1129,10 @@ public class StartHook implements IXposedHookLoadPackage {
         }
         List<String> resultList = new LinkedList<>();
         for (String s:strings){
-            if (s.startsWith("com.tencent") || s.startsWith("com.alipay")){
+            if (s.startsWith("com.tencent")
+                    || s.contains("alipay")
+                    || s.contains("Alipay")
+            ){
                 resultList.add(s);
             }else if(changedSelf && self != null){
                 if(self.equals(s)){
@@ -1100,11 +1146,15 @@ public class StartHook implements IXposedHookLoadPackage {
     public static boolean isAccessiblePackageName(int callingUID,String accessingPackageName){
         if (isSystemApp(callingUID)){return true;}
         if (nonSysPackages.containsKey(callingUID) && nonSysPackages.get(callingUID) != null){
-            if (nonSysPackages.get(callingUID).packageName == null){return false;}
+            String pkgName = nonSysPackages.get(callingUID).packageName;
+            if (pkgName == null){return false;}
             if (Objects.equals(accessingPackageName,nonSysPackages.get(callingUID).packageName)){
                 return true;
             }
-            if (nonSysPackages.get(callingUID).packageName.startsWith("com.tencent") || nonSysPackages.get(callingUID).packageName.startsWith("com.alipay")){
+            if (nonSysPackages.get(callingUID).packageName.startsWith("com.tencent")
+                    || pkgName.contains("alipay")
+                    || pkgName.contains("Alipay")
+            ){
                 return true;
             }
         }

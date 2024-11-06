@@ -42,7 +42,7 @@ dependencies {
     implementation libs.annotation.jvm
     compileOnly 'de.robv.android.xposed:api:82'
 
-    def libsuVersion = '5.2.2'
+    def libsuVersion = '6.0.0'
 
     // The core module that provides APIs to a shell
     implementation "com.github.topjohnwu.libsu:core:${libsuVersion}"
