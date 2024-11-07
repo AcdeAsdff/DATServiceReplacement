@@ -29,6 +29,7 @@ import android.util.SparseArray;
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
 import com.linearity.utils.SimpleExecutorWithMode;
+import com.linearity.utils.SystemAppChecker;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
@@ -144,6 +145,8 @@ public class ReturnIfNonSys {
     }
     public static final Map<SimpleExecutorWithMode,Map<Integer,XC_MethodHook>> SimpleExecutorWithAttrSource_Map = new HashMap<>();
     public static final Map<SimpleExecutorWithMode,XC_MethodHook> SimpleExecutor_Map = new HashMap<>();
+
+    @Deprecated
     public static XC_MethodHook simpleExecutorWithAttrSource(SimpleExecutorWithMode simpleExecutorWithMode, int index){
         {
             XC_MethodHook ret;
@@ -163,25 +166,33 @@ public class ReturnIfNonSys {
         }
     }
     public static XC_MethodHook simpleExecutorWithoutAttrSource(SimpleExecutorWithMode simpleExecutorWithMode){
+        return simpleExecutorWithoutAttrSource(simpleExecutorWithMode,defaultSystemChecker);
+    }
+    public static XC_MethodHook simpleExecutorWithoutAttrSource(SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
         {
             XC_MethodHook ret = SimpleExecutor_Map.getOrDefault(simpleExecutorWithMode,null);
             if (ret != null){
                 return ret;
             }else {
-                ret = switchForSimpleExecutor(simpleExecutorWithMode);
+                ret = switchForSimpleExecutor(simpleExecutorWithMode,systemAppChecker);
             }
             SimpleExecutor_Map.put(simpleExecutorWithMode,ret);
             return ret;
         }
     }
+
+    public static SystemAppChecker defaultSystemChecker = param -> isSystemApp(Binder.getCallingUid());
     private static XC_MethodHook switchForSimpleExecutor(SimpleExecutorWithMode simpleExecutorWithMode){
+        return switchForSimpleExecutor(simpleExecutorWithMode,defaultSystemChecker);
+    }
+    private static XC_MethodHook switchForSimpleExecutor(SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
         switch (simpleExecutorWithMode.mode){
             case MODE_BEFORE:
                 return new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
-                        if (isSystemApp(Binder.getCallingUid())){return;}
+                        if (systemAppChecker.checkSystemApp(param)){return;}
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
                 };
@@ -189,7 +200,7 @@ public class ReturnIfNonSys {
                 return new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        if (isSystemApp(Binder.getCallingUid())){return;}
+                        if (systemAppChecker.checkSystemApp(param)){return;}
                         super.afterHookedMethod(param);
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
@@ -199,14 +210,14 @@ public class ReturnIfNonSys {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
-                        if (isSystemApp(Binder.getCallingUid())){return;}
+                        if (systemAppChecker.checkSystemApp(param)){return;}
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         super.afterHookedMethod(param);
-                        if (isSystemApp(Binder.getCallingUid())){return;}//fixed clipboard not working
+                        if (systemAppChecker.checkSystemApp(param)){return;}//fixed clipboard not working
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
                 };
@@ -249,7 +260,7 @@ public class ReturnIfNonSys {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
-                        if (isSystemApp(Binder.getCallingUid())){return;}//fixed clipboard not working
+                        if (systemAppChecker.checkSystemApp(param)){return;}//fixed clipboard not working
                         simpleExecutorWithMode.simpleExecutor.execute(param);
                     }
                 };
@@ -990,25 +1001,31 @@ public class ReturnIfNonSys {
     }
 
     public static void hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object){
+        hookAllMethodsWithCache_Auto(hookClass,methodName,object,defaultSystemChecker);
+    }
+    public static void hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
         if (object == null){
-            hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, null);
+            hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, null,systemAppChecker);
             return;
         }
 
         if (object instanceof SimpleExecutorWithMode){
-            hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode) object);
+            hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode) object,systemAppChecker);
         }else {
-            hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, object);
+            hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, object,systemAppChecker);
         }
     }
     public static void hookAllMethodsWithCache_ReturnObjIfNonSys(Class<?> hookClass, String methodName, Object object){
+        hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName,object,defaultSystemChecker);
+    }
+    public static void hookAllMethodsWithCache_ReturnObjIfNonSys(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
         if (object != null){
             if (object instanceof XC_MethodHook){
                 XposedBridge.hookAllMethods(hookClass,methodName,(XC_MethodHook)object);
                 return;
             }
             if (object instanceof SimpleExecutorWithMode){
-                hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode)object);
+                hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode)object,systemAppChecker);
                 return;
             }
         }
@@ -1033,9 +1050,14 @@ public class ReturnIfNonSys {
     }
 
     public static void hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode){
+        hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,simpleExecutorWithMode,defaultSystemChecker);
+    }
+    public static void hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
         Boolean[] foundAttrSource = new Boolean[]{false};
         for (Method m:hookClass.getDeclaredMethods()){
-            if (!m.getName().equals(methodName)){continue;}
+            if (!m.getName().equals(methodName)){
+                continue;
+            }
             int index=0;
             foundAttrSource[0] = false;
             for (Class<?> c:m.getParameterTypes()){
@@ -1048,7 +1070,7 @@ public class ReturnIfNonSys {
                 index++;
             }
             if (!foundAttrSource[0]){
-                XposedBridge.hookMethod(m,simpleExecutorWithoutAttrSource(simpleExecutorWithMode));
+                XposedBridge.hookMethod(m,simpleExecutorWithoutAttrSource(simpleExecutorWithMode,systemAppChecker));
             }
         }
     }
