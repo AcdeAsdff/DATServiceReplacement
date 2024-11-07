@@ -9,6 +9,7 @@ Remake DeviceAddressTweaker in a (android) Service way so that apps (in China) w
 - 非系统应用得到的蓝牙返回值(随机，对相同包名的结果相同)
 - 非系统应用得到的剪贴板返回值(随机，对相同包名的结果相同)
 - 非系统应用得到的app列表(只有微信支付宝)
+- 非系统应用得到的AppOps信息(MODE_ALLOWED和空ArrayList)
 - [待测试]非系统应用得到的电池状态(随机，对相同包名的结果相同)
 - [待测试]非系统应用得到的输入法信息(搜狗输入法)
 
