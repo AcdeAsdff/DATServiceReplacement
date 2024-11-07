@@ -112,7 +112,7 @@ public class ReturnIfNonSys {
                         if (!isSystemApp(Binder.getCallingUid())){
                             param.setResult(null);
                         }
-                        AttributionSource attributionSource = null;
+                        AttributionSource attributionSource;
                         attributionSource = (AttributionSource) param.args[index];
                         if (attributionSource != null){
                             if (!isSystemApp(attributionSource.getUid(),attributionSource.getPackageName())){
@@ -129,7 +129,7 @@ public class ReturnIfNonSys {
                         if (!isSystemApp(Binder.getCallingUid())){
                             param.setResult(result);
                         }
-                        AttributionSource attributionSource = null;
+                        AttributionSource attributionSource;
                         attributionSource = (AttributionSource) param.args[index];
                         if (attributionSource != null){
                             if (!isSystemApp(attributionSource.getUid(),attributionSource.getPackageName())){

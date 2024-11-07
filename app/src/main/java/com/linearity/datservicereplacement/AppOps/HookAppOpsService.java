@@ -1,29 +1,21 @@
 package com.linearity.datservicereplacement.AppOps;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
-import static android.app.AppOpsManager.MODE_ERRORED;
-import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 
-import android.app.AppOpsManager;
 import android.app.SyncNotedAppOp;
 import android.content.AttributionSource;
-import android.content.pm.PackageManager;
 import android.os.Binder;
 
 import com.linearity.utils.NotFinished;
-import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
-import com.linearity.utils.SystemAppChecker;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
