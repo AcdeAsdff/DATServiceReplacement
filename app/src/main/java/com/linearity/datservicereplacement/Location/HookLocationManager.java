@@ -10,6 +10,7 @@ import android.os.SystemClock;
 
 import com.linearity.datservicereplacement.ReturnIfNonSys;
 import com.linearity.utils.ExtendedRandom;
+import com.linearity.utils.NotFinished;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,7 +21,7 @@ import java.util.Set;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
+@NotFinished
 public class HookLocationManager {
 
     public static void doHook(XC_LoadPackage.LoadPackageParam lpparam){
