@@ -82,8 +82,8 @@ public class HookPermissionManagerService {
     }
 
     public static void hookIPermissionChecker(Class<?> hookClass){
-//        hookAllMethodsWithCache_Auto(hookClass,"checkPermission",PERMISSION_GRANTED);
-//        hookAllMethodsWithCache_Auto(hookClass,"finishDataDelivery",null);
-//        hookAllMethodsWithCache_Auto(hookClass,"checkOp",MODE_ALLOWED);
+        hookAllMethodsWithCache_Auto(hookClass,"checkPermission",PERMISSION_GRANTED);
+        hookAllMethodsWithCache_Auto(hookClass,"finishDataDelivery",null);
+        hookAllMethodsWithCache_Auto(hookClass,"checkOp",MODE_ALLOWED);
     }
 }

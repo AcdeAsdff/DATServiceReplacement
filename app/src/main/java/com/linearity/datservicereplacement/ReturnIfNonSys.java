@@ -205,7 +205,7 @@ public class ReturnIfNonSys {
         }
         SystemAppChecker ret = param ->
                 isSystemApp(Binder.getCallingUid())
-                && isSystemApp((int) param.args[2]);
+                && isSystemApp((int) param.args[index]);
         getSystemChecker_UidAt_map.put(index,ret);
         return ret;
     }

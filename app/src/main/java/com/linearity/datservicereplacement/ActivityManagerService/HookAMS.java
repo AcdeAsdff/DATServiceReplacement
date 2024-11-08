@@ -1,6 +1,7 @@
 package com.linearity.datservicereplacement.ActivityManagerService;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
+import static com.linearity.datservicereplacement.StartHook.callOnStarted;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -24,6 +25,7 @@ public class HookAMS {
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
                 mSystemReady = true;
+                callOnStarted();
             }
         });
 

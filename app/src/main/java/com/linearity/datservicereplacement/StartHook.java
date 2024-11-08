@@ -892,40 +892,11 @@ public class StartHook implements IXposedHookLoadPackage {
 //                }
 //            });
 //        }
-        hookClass = XposedHelpers.findClassIfExists("com.android.internal.telephony.GsmCdmaPhone",lpparam.classLoader);
-        if (hookClass != null){
-            XC_MethodHook setField = new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    super.beforeHookedMethod(param);
-                    ExtendedRandom random = new ExtendedRandom(param.thisObject.hashCode());
-                    XposedHelpers.setObjectField(param.thisObject,"mImei",random.nextRandomDecimal(15));
-                    XposedHelpers.setObjectField(param.thisObject,"mImeiSv",random.nextRandomDecimal(16));
-                    XposedHelpers.setObjectField(param.thisObject,"mMeid",random.nextRandomHexUpper(15));
-                    XposedHelpers.setObjectField(param.thisObject,"mEsn",random.nextRandomHexUpper(15));
-                }
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    super.afterHookedMethod(param);
-                    ExtendedRandom random = new ExtendedRandom(param.thisObject.hashCode());
-                    XposedHelpers.setObjectField(param.thisObject,"mImei",random.nextRandomDecimal(15));
-                    XposedHelpers.setObjectField(param.thisObject,"mImeiSv",random.nextRandomDecimal(16));
-                    XposedHelpers.setObjectField(param.thisObject,"mMeid",random.nextRandomHexUpper(15));
-                    XposedHelpers.setObjectField(param.thisObject,"mEsn",random.nextRandomHexUpper(15));
-                }
-            };
-            XposedBridge.hookAllMethods(hookClass, "parseImeiInfo", setField);
-            XposedBridge.hookAllMethods(hookClass, "getDeviceSvn", setField);
-            XposedBridge.hookAllMethods(hookClass, "getImei", setField);
-            XposedBridge.hookAllMethods(hookClass, "getEsn", setField);
-            XposedBridge.hookAllMethods(hookClass, "getMeid", setField);
-            XposedBridge.hookAllMethods(hookClass, "getNai", returnNull);
-        }
-        setOtherProperties();
+
 
         HookAMS.doHook(lpparam);
         HookIActivityManager.doHook(lpparam);
-        HookContextImpl.doHook(lpparam);
+//        HookContextImpl.doHook(lpparam);
 
 //        hookClass = XposedHelpers.findClassIfExists("android.app.ContextImpl",lpparam.classLoader);
 //        if (hookClass != null){
@@ -1082,7 +1053,39 @@ public class StartHook implements IXposedHookLoadPackage {
         LoggerLog("===========PhoneProductCodeName changed===========");
     }
 
-    void setOtherProperties(){
+    public static void callOnStarted(){
+        Class<?> hookClass = XposedHelpers.findClassIfExists("com.android.internal.telephony.GsmCdmaPhone",XposedBridge.BOOTCLASSLOADER);
+        if (hookClass != null){
+            XC_MethodHook setField = new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    ExtendedRandom random = new ExtendedRandom(param.thisObject.hashCode());
+                    XposedHelpers.setObjectField(param.thisObject,"mImei",random.nextRandomDecimal(15));
+                    XposedHelpers.setObjectField(param.thisObject,"mImeiSv",random.nextRandomDecimal(16));
+                    XposedHelpers.setObjectField(param.thisObject,"mMeid",random.nextRandomHexUpper(15));
+                    XposedHelpers.setObjectField(param.thisObject,"mEsn",random.nextRandomHexUpper(15));
+                }
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    super.afterHookedMethod(param);
+                    ExtendedRandom random = new ExtendedRandom(param.thisObject.hashCode());
+                    XposedHelpers.setObjectField(param.thisObject,"mImei",random.nextRandomDecimal(15));
+                    XposedHelpers.setObjectField(param.thisObject,"mImeiSv",random.nextRandomDecimal(16));
+                    XposedHelpers.setObjectField(param.thisObject,"mMeid",random.nextRandomHexUpper(15));
+                    XposedHelpers.setObjectField(param.thisObject,"mEsn",random.nextRandomHexUpper(15));
+                }
+            };
+            XposedBridge.hookAllMethods(hookClass, "parseImeiInfo", setField);
+            XposedBridge.hookAllMethods(hookClass, "getDeviceSvn", setField);
+            XposedBridge.hookAllMethods(hookClass, "getImei", setField);
+            XposedBridge.hookAllMethods(hookClass, "getEsn", setField);
+            XposedBridge.hookAllMethods(hookClass, "getMeid", setField);
+            XposedBridge.hookAllMethods(hookClass, "getNai", returnNull);
+        }
+        setOtherProperties();
+    }
+    public static void setOtherProperties(){
         Shell.getShell().newJob().add("su").exec();
         Shell.getShell().newJob().add("resetprop -n ro.boot.verifiedbootstate green").exec();
         Shell.getShell().newJob().add("resetprop -n vendor.boot.verifiedbootstate green").exec();

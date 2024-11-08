@@ -2,13 +2,10 @@ package com.linearity.datservicereplacement.ActivityManagerService;
 
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.getPackageName;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.doLog;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findArgByClassInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findClassIndexInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findStrAndUidInArgs;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.findStrInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_UidAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
@@ -20,241 +17,19 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 
-import com.linearity.datservicereplacement.AndroidConsts.IntentConstants;
 import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
-import com.linearity.utils.SystemAppChecker;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Predicate;
 
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class HookIActivityManager {
 
     public static int PROCESS_STATE_TOP = 3;
-    public static final Set<String> BLACKLIST_INTENT_ACTION_SET = new HashSet<>();
-    static {
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MAIN);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_VIEW);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEFAULT);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_QUICK_VIEW);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ATTACH_DATA);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_EDIT);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INSERT_OR_EDIT);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PICK);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CREATE_REMINDER);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CREATE_SHORTCUT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_APPLICATION_PREFERENCES);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SHOW_APP_INFO);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ACTIVITY_RECOGNIZER);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CHOOSER);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_GET_CONTENT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DIAL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CALL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CALL_EMERGENCY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DIAL_EMERGENCY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CALL_PRIVILEGED);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CARRIER_SETUP);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SENDTO);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SEND);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SEND_MULTIPLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ANSWER);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INSERT);
-//        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PASTE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DELETE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_RUN);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SYNC);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PICK_ACTIVITY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SEARCH);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SYSTEM_TUTORIAL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_WEB_SEARCH);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ASSIST);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_VOICE_ASSIST);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ALL_APPS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SET_WALLPAPER);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_BUG_REPORT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_FACTORY_TEST);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CALL_BUTTON);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_VOICE_COMMAND);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SEARCH_LONG_PRESS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_APP_ERROR);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PENDING_INCIDENT_REPORTS_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INCIDENT_REPORT_READY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_POWER_USAGE_SUMMARY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEVICE_INITIALIZATION_WIZARD);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_UPGRADE_SETUP);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SHOW_KEYBOARD_SHORTCUTS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DISMISS_KEYBOARD_SHORTCUTS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_NETWORK_USAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INSTALL_PACKAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INSTALL_FAILURE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INSTALL_INSTANT_APP_PACKAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_RESOLVE_INSTANT_APP_PACKAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INSTANT_APP_RESOLVER_SETTINGS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_UNINSTALL_PACKAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_APP_PERMISSIONS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_APP_PERMISSION);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_PERMISSIONS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_AUTO_REVOKE_PERMISSIONS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_UNUSED_APPS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REVIEW_PERMISSIONS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_VIEW_PERMISSION_USAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_VIEW_PERMISSION_USAGE_FOR_PERIOD);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_DEFAULT_APP);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_SPECIAL_APP_ACCESSES);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_PERMISSION_APPS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REVIEW_PERMISSION_USAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REVIEW_PERMISSION_HISTORY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REVIEW_ONGOING_PERMISSION_USAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REVIEW_ACCESSIBILITY_SERVICES);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SCREEN_OFF);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SCREEN_ON);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DREAMING_STOPPED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DREAMING_STARTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_PRESENT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_TIME_TICK);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_TIME_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DATE_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_TIMEZONE_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ALARM_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_LOCKED_BOOT_COMPLETED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_BOOT_COMPLETED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CLOSE_SYSTEM_DIALOGS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_INSTALL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_ADDED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_REPLACED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MY_PACKAGE_REPLACED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_REMOVED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_REMOVED_INTERNAL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_FULLY_REMOVED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_ENABLE_ROLLBACK);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CANCEL_ENABLE_ROLLBACK);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ROLLBACK_COMMITTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_QUERY_PACKAGE_RESTART);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_RESTARTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_DATA_CLEARED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGES_SUSPENDED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGES_UNSUSPENDED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGES_SUSPENSION_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DISTRACTING_PACKAGES_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MY_PACKAGE_SUSPENDED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SHOW_SUSPENDED_APP_DETAILS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_UNSUSPENDED_MANUALLY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MY_PACKAGE_UNSUSPENDED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_UID_REMOVED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_FIRST_LAUNCH);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_NEEDS_VERIFICATION);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_VERIFIED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INTENT_FILTER_NEEDS_VERIFICATION);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DOMAINS_NEED_VERIFICATION);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PREFERRED_ACTIVITY_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_WALLPAPER_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CONFIGURATION_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SPLIT_CONFIGURATION_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_LOCALE_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_BATTERY_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_BATTERY_LEVEL_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_BATTERY_LOW);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_BATTERY_OKAY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_POWER_CONNECTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_POWER_DISCONNECTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SHUTDOWN);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REQUEST_SHUTDOWN);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEVICE_STORAGE_LOW);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEVICE_STORAGE_OK);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEVICE_STORAGE_FULL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEVICE_STORAGE_NOT_FULL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGE_PACKAGE_STORAGE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_UMS_CONNECTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_UMS_DISCONNECTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_REMOVED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_UNMOUNTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_CHECKING);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_NOFS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_MOUNTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_SHARED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_UNSHARED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_BAD_REMOVAL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_UNMOUNTABLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_EJECT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_SCANNER_STARTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_SCANNER_FINISHED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_BUTTON);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CAMERA_BUTTON);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_GTALK_SERVICE_CONNECTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_GTALK_SERVICE_DISCONNECTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_INPUT_METHOD_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_AIRPLANE_MODE_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PROVIDER_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_HEADSET_PLUG);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_ADVANCED_SETTINGS_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_APPLICATION_RESTRICTIONS_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_NEW_OUTGOING_CALL);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REBOOT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DOCK_EVENT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_IDLE_MAINTENANCE_START);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_IDLE_MAINTENANCE_END);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_REMOTE_INTENT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PRE_BOOT_COMPLETED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_GET_RESTRICTION_ENTRIES);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_INITIALIZE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_FOREGROUND);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_BACKGROUND);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_ADDED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_STARTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_STARTING);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_STOPPING);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_STOPPED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_REMOVED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_SWITCHED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_UNLOCKED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_USER_INFO_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGED_PROFILE_ADDED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGED_PROFILE_REMOVED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGED_PROFILE_UNLOCKED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGED_PROFILE_AVAILABLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MANAGED_PROFILE_UNAVAILABLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PROFILE_ACCESSIBLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PROFILE_INACCESSIBLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEVICE_LOCKED_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_QUICK_CLOCK);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SHOW_BRIGHTNESS_DIALOG);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_GLOBAL_BUTTON);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MEDIA_RESOURCE_GRANTED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_OVERLAY_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_OPEN_DOCUMENT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_CREATE_DOCUMENT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_OPEN_DOCUMENT_TREE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_TRANSLATE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEFINE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DYNAMIC_SENSOR_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MASTER_CLEAR);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_MASTER_CLEAR_NOTIFICATION);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_FACTORY_RESET);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SETTING_RESTORED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PROCESS_TEXT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SIM_STATE_CHANGED);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_SERVICE_STATE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_LOAD_DATA);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_THERMAL_EVENT);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DOCK_IDLE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DOCK_ACTIVE);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_DEVICE_CUSTOMIZATION_READY);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_VIEW_LOCUS);
-        BLACKLIST_INTENT_ACTION_SET.add(IntentConstants.ACTION_PACKAGE_NEEDS_INTEGRITY_VERIFICATION);
-    }
 
     public static void doHook(XC_LoadPackage.LoadPackageParam lpparam){
         PROCESS_STATE_TOP = XposedHelpers.getStaticIntField(android.app.ActivityManager.class,"PROCESS_STATE_TOP");
@@ -276,17 +51,18 @@ public class HookIActivityManager {
         hookAllMethodsWithCache_Auto(hookClass,"removeUidFromObserver",null,findStrAndUidInArgs);
         hookAllMethodsWithCache_Auto(hookClass,"isUidActive",true,findStrAndUidInArgs);
         hookAllMethodsWithCache_Auto(hookClass,"getUidProcessState",PROCESS_STATE_TOP,findStrAndUidInArgs);
-//        hookAllMethodsWithCache_Auto(hookClass, "checkPermission",PackageManager.PERMISSION_GRANTED);
-        hookAllMethodsWithCache_Auto(hookClass, "checkPermission",(SimpleExecutor) param -> {
-            for (StackTraceElement s: new Exception("requesting permission:" + Arrays.toString(param.args) + Binder.getCallingUid()).getStackTrace()){
-                if (s.getClassName().equals("android.app.ContextImpl")){
-                    return;//if no return,the permission WILL BE GIVEN OUT!
+        hookAllMethodsWithCache_Auto(hookClass, "checkPermission",
+                (SimpleExecutor) param -> {
+                    for (StackTraceElement s: new Exception("requesting permission:" + Arrays.toString(param.args) + Binder.getCallingUid()).getStackTrace()){
+                        if (s.getClassName().equals("android.app.ContextImpl")){
+                            return;//if no return,the permission WILL BE REALLY GIVEN OUT!
+                        }
+                    }
+                    String requestingPermission = (String) param.args[0];
+                    param.setResult(PackageManager.PERMISSION_GRANTED);
+                    LoggerLog("requesting permission:" + Arrays.toString(param.args) + Binder.getCallingUid());
                 }
-            }
-            param.setResult(PackageManager.PERMISSION_GRANTED);
-            LoggerLog(new Exception("requesting permission:" + Arrays.toString(param.args) + Binder.getCallingUid()));
-        }
-        );
+            );
         hookAllMethodsWithCache_Auto(hookClass, "logFgsApiBegin", null);
         hookAllMethodsWithCache_Auto(hookClass,"logFgsApiEnd",null);
         hookAllMethodsWithCache_Auto(hookClass,"logFgsApiStateChanged",null);
@@ -346,12 +122,12 @@ public class HookIActivityManager {
             IntentFilter replaceFilter = new IntentFilter();
             for (Iterator<String> it = filter.actionsIterator(); it.hasNext(); ) {
                 String action = it.next();
-                if (BLACKLIST_INTENT_ACTION_SET.contains(action)){
+                if (Consts.BLACKLIST_INTENT_ACTION_SET.contains(action)){
                     continue;
                 }
-                if (action.toLowerCase().contains("background")){
-                    continue;
-                }
+//                if (action.toLowerCase().contains("background")){
+//                    continue;
+//                }
                 replaceFilter.addAction(action);
             }
             cloneIntentFilterFilter(filter,replaceFilter);
