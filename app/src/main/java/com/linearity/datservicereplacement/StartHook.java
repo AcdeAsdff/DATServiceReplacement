@@ -1,6 +1,5 @@
 package com.linearity.datservicereplacement;
 
-import static com.linearity.datservicereplacement.ActivityManagerService.HookAMS.doHook;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.EMPTY_PACKAGE_INFO;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.IThinkShouldFilterApplication;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.hookGetPackageInfo;
@@ -10,12 +9,38 @@ import static com.linearity.datservicereplacement.PackageManager.hookIPackageMan
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.pm;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.sysPackages;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.sysPackagesByName;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_WATCHED_ARRAYMAP;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.WatchedArrayMapClass;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyArrListIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyArrMapIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyArrSetIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyIntArrIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyListListPairIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyParceledListSliceIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptySparseArrayIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyStrArrIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.emptyWatchedArrMapIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeInterfaceConfigurationIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeNetworkArrIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeNetworkIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeNetworkInfoArrIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeNetworkInfoIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeUserInfoArrIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.fakeUserInfoIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.falseIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.getConfusedApplicationInfoIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.getConfusedPackageInfoIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.longZeroIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.newArrMapIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.nullIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.oneIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.trueIfNonSys;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.zeroIfNonSys;
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_STRING_ARRAY;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
-import static com.linearity.utils.LoggerUtils.showObjectFields;
 import static com.linearity.utils.ReturnReplacements.returnNull;
 import static com.linearity.utils.ReturnReplacements.returnTrue;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.*;
 
 import android.content.AttributionSource;
 import android.content.ContentProvider;
@@ -35,6 +60,7 @@ import com.linearity.datservicereplacement.PowerManager.HookIPowerStatsService;
 import com.linearity.datservicereplacement.Telecom.HookTelecomService;
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.FakeInfo.ExpectInfo;
+import com.topjohnwu.superuser.Shell;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,7 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import com.topjohnwu.superuser.Shell;
+
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
