@@ -55,6 +55,7 @@ import com.linearity.datservicereplacement.AppOps.HookAppOpsService;
 import com.linearity.datservicereplacement.Battery.HookIBatteryStats;
 import com.linearity.datservicereplacement.Bluetooth.HookBluetooth;
 import com.linearity.datservicereplacement.Clipboard.HookIClipboard;
+import com.linearity.datservicereplacement.Context.HookContextImpl;
 import com.linearity.datservicereplacement.InputMethod.HookInputMethod;
 import com.linearity.datservicereplacement.PowerManager.HookIPowerStatsService;
 import com.linearity.datservicereplacement.Telecom.HookTelecomService;
@@ -924,6 +925,7 @@ public class StartHook implements IXposedHookLoadPackage {
 
         HookAMS.doHook(lpparam);
         HookIActivityManager.doHook(lpparam);
+        HookContextImpl.doHook(lpparam);
 
 //        hookClass = XposedHelpers.findClassIfExists("android.app.ContextImpl",lpparam.classLoader);
 //        if (hookClass != null){

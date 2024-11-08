@@ -2,6 +2,7 @@ package com.linearity.datservicereplacement.ActivityManagerService;
 
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.getPackageName;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.isSystemApp;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.doLog;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findArgByClassInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findClassIndexInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findStrAndUidInArgs;
@@ -24,6 +25,7 @@ import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 import com.linearity.utils.SystemAppChecker;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -274,8 +276,18 @@ public class HookIActivityManager {
         hookAllMethodsWithCache_Auto(hookClass,"removeUidFromObserver",null,findStrAndUidInArgs);
         hookAllMethodsWithCache_Auto(hookClass,"isUidActive",true,findStrAndUidInArgs);
         hookAllMethodsWithCache_Auto(hookClass,"getUidProcessState",PROCESS_STATE_TOP,findStrAndUidInArgs);
-        hookAllMethodsWithCache_Auto(hookClass,"checkPermission", PackageManager.PERMISSION_GRANTED,getSystemChecker_UidAt(2));
-        hookAllMethodsWithCache_Auto(hookClass,"logFgsApiBegin",null);
+//        hookAllMethodsWithCache_Auto(hookClass, "checkPermission",PackageManager.PERMISSION_GRANTED);
+        hookAllMethodsWithCache_Auto(hookClass, "checkPermission",(SimpleExecutor) param -> {
+            for (StackTraceElement s: new Exception("requesting permission:" + Arrays.toString(param.args) + Binder.getCallingUid()).getStackTrace()){
+                if (s.getClassName().equals("android.app.ContextImpl")){
+                    return;//if no return,the permission WILL BE GIVEN OUT!
+                }
+            }
+            param.setResult(PackageManager.PERMISSION_GRANTED);
+            LoggerLog(new Exception("requesting permission:" + Arrays.toString(param.args) + Binder.getCallingUid()));
+        }
+        );
+        hookAllMethodsWithCache_Auto(hookClass, "logFgsApiBegin", null);
         hookAllMethodsWithCache_Auto(hookClass,"logFgsApiEnd",null);
         hookAllMethodsWithCache_Auto(hookClass,"logFgsApiStateChanged",null);
         hookAllMethodsWithCache_Auto(hookClass,"handleApplicationCrash",null);
@@ -335,6 +347,9 @@ public class HookIActivityManager {
             for (Iterator<String> it = filter.actionsIterator(); it.hasNext(); ) {
                 String action = it.next();
                 if (BLACKLIST_INTENT_ACTION_SET.contains(action)){
+                    continue;
+                }
+                if (action.toLowerCase().contains("background")){
                     continue;
                 }
                 replaceFilter.addAction(action);

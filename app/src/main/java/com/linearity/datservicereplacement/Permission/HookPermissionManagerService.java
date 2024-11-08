@@ -1,11 +1,16 @@
 package com.linearity.datservicereplacement.Permission;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.logIfNonSys;
+import static com.linearity.utils.LoggerUtils.LoggerLog;
 
 import android.content.pm.PackageManager;
+import android.os.Binder;
 
 import com.linearity.utils.NotFinished;
+import com.linearity.utils.SimpleExecutor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,14 +64,14 @@ public class HookPermissionManagerService {
 //    hookAllMethodsWithCache_Auto(hookClass,"registerAttributionSource",IBinder);
         hookAllMethodsWithCache_Auto(hookClass,"getRegisteredAttributionSourceCount",0);
         hookAllMethodsWithCache_Auto(hookClass,"isRegisteredAttributionSource",true);
-        hookAllMethodsWithCache_Auto(hookClass,"checkPermission",PackageManager.PERMISSION_GRANTED);
-        hookAllMethodsWithCache_Auto(hookClass,"checkUidPermission",PackageManager.PERMISSION_GRANTED);
+        hookAllMethodsWithCache_Auto(hookClass,"checkPermission",PERMISSION_GRANTED);
+        hookAllMethodsWithCache_Auto(hookClass,"checkUidPermission",PERMISSION_GRANTED);
         hookAllMethodsWithCache_Auto(hookClass,"getAllPermissionStates",new HashMap<>());
     }
 
     public static void hookILegacyPermissionManager(Class<?> hookClass){
-        hookAllMethodsWithCache_Auto(hookClass,"checkDeviceIdentifierAccess",PackageManager.PERMISSION_GRANTED);
-        hookAllMethodsWithCache_Auto(hookClass,"checkPhoneNumberAccess",PackageManager.PERMISSION_GRANTED);
+        hookAllMethodsWithCache_Auto(hookClass,"checkDeviceIdentifierAccess", PERMISSION_GRANTED);
+        hookAllMethodsWithCache_Auto(hookClass,"checkPhoneNumberAccess", PERMISSION_GRANTED);
         hookAllMethodsWithCache_Auto(hookClass,"grantDefaultPermissionsToEnabledCarrierApps",null);
         hookAllMethodsWithCache_Auto(hookClass,"grantDefaultPermissionsToEnabledImsServices",null);
         hookAllMethodsWithCache_Auto(hookClass,"grantDefaultPermissionsToEnabledTelephonyDataServices",null);
@@ -77,8 +82,8 @@ public class HookPermissionManagerService {
     }
 
     public static void hookIPermissionChecker(Class<?> hookClass){
-        hookAllMethodsWithCache_Auto(hookClass,"checkPermission",PackageManager.PERMISSION_GRANTED);
-        hookAllMethodsWithCache_Auto(hookClass,"finishDataDelivery",null);
-        hookAllMethodsWithCache_Auto(hookClass,"checkOp",MODE_ALLOWED);
+//        hookAllMethodsWithCache_Auto(hookClass,"checkPermission",PERMISSION_GRANTED);
+//        hookAllMethodsWithCache_Auto(hookClass,"finishDataDelivery",null);
+//        hookAllMethodsWithCache_Auto(hookClass,"checkOp",MODE_ALLOWED);
     }
 }

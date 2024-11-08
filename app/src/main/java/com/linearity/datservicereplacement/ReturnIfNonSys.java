@@ -36,10 +36,12 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -201,7 +203,8 @@ public class ReturnIfNonSys {
         if (getSystemChecker_UidAt_map.containsKey(index)){
             return getSystemChecker_UidAt_map.get(index);
         }
-        SystemAppChecker ret = param -> isSystemApp(Binder.getCallingUid())
+        SystemAppChecker ret = param ->
+                isSystemApp(Binder.getCallingUid())
                 && isSystemApp((int) param.args[2]);
         getSystemChecker_UidAt_map.put(index,ret);
         return ret;
@@ -1036,37 +1039,48 @@ public class ReturnIfNonSys {
         return ret;
     }
 
-    public static void hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object){
-        hookAllMethodsWithCache_Auto(hookClass,methodName,object,defaultSystemChecker);
+    public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object){
+        return hookAllMethodsWithCache_Auto(hookClass,methodName,object,defaultSystemChecker);
     }
-    public static void hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+    public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+        List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         if (object == null){
-            hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, null,systemAppChecker);
-            return;
+            Collection<XC_MethodHook.Unhook> unhookCollection = hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, null,systemAppChecker);
+            unhooks.addAll(unhookCollection);
+            return unhooks;
         }
 
         if (object instanceof SimpleExecutorWithMode){
-            hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode) object,systemAppChecker);
+            Collection<XC_MethodHook.Unhook> unhookCollection = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode) object,systemAppChecker);
+            unhooks.addAll(unhookCollection);
+            return unhooks;
         }else if (object instanceof SimpleExecutor){
-            hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,
+            Collection<XC_MethodHook.Unhook> unhookCollection = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,
                     new SimpleExecutorWithMode(MODE_BEFORE, (SimpleExecutor) object),
                     systemAppChecker);
+            unhooks.addAll(unhookCollection);
+            return unhooks;
         }else {
-            hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, object,systemAppChecker);
+            Collection<XC_MethodHook.Unhook> unhookCollection = hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, object,systemAppChecker);
+            unhooks.addAll(unhookCollection);
+            return unhooks;
         }
     }
-    public static void hookAllMethodsWithCache_ReturnObjIfNonSys(Class<?> hookClass, String methodName, Object object){
-        hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName,object,defaultSystemChecker);
+    public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_ReturnObjIfNonSys(Class<?> hookClass, String methodName, Object object){
+        return hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName,object,defaultSystemChecker);
     }
-    public static void hookAllMethodsWithCache_ReturnObjIfNonSys(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+    public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_ReturnObjIfNonSys(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+        List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         if (object != null){
             if (object instanceof XC_MethodHook){
-                XposedBridge.hookAllMethods(hookClass,methodName,(XC_MethodHook)object);
-                return;
+                Collection<XC_MethodHook.Unhook> unhook = XposedBridge.hookAllMethods(hookClass,methodName,(XC_MethodHook)object);
+                unhooks.addAll(unhook);
+                return unhooks;
             }
             if (object instanceof SimpleExecutorWithMode){
-                hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode)object,systemAppChecker);
-                return;
+                Collection<XC_MethodHook.Unhook> unhook = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode)object,systemAppChecker);
+                unhooks.addAll(unhook);
+                return unhooks;
             }
         }
         Boolean[] foundAttrSource = new Boolean[]{false};
@@ -1078,22 +1092,26 @@ public class ReturnIfNonSys {
                 if (c==null){continue;}
                 if (Objects.equals(c.getCanonicalName(),AttributionSource.class.getCanonicalName())){
                     foundAttrSource[0] = true;
-                    XposedBridge.hookMethod(m,ObjectWithAttrSource(object,index));
+                    XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,ObjectWithAttrSource(object,index));
+                    unhooks.add(unhook);
                     break;
                 }
                 index++;
             }
             if (!foundAttrSource[0]){
-                XposedBridge.hookMethod(m,objectIfNonSys(object));
+                XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,objectIfNonSys(object));
+                unhooks.add(unhook);
             }
         }
+        return unhooks;
     }
 
-    public static void hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode){
-        hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,simpleExecutorWithMode,defaultSystemChecker);
+    public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode){
+        return hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,simpleExecutorWithMode,defaultSystemChecker);
     }
-    public static void hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
+    public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
         Boolean[] foundAttrSource = new Boolean[]{false};
+        List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         for (Method m:hookClass.getDeclaredMethods()){
             if (!m.getName().equals(methodName)){
                 continue;
@@ -1104,15 +1122,18 @@ public class ReturnIfNonSys {
                 if (c==null){continue;}
                 if (Objects.equals(c.getCanonicalName(),AttributionSource.class.getCanonicalName())){
                     foundAttrSource[0] = true;
-                    XposedBridge.hookMethod(m,simpleExecutorWithAttrSource(simpleExecutorWithMode,index));
+                    XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,simpleExecutorWithAttrSource(simpleExecutorWithMode,index));
+                    unhooks.add(unhook);
                     break;
                 }
                 index++;
             }
             if (!foundAttrSource[0]){
-                XposedBridge.hookMethod(m,simpleExecutorWithoutAttrSource(simpleExecutorWithMode,systemAppChecker));
+                XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,simpleExecutorWithoutAttrSource(simpleExecutorWithMode,systemAppChecker));
+                unhooks.add(unhook);
             }
         }
+        return unhooks;
     }
 
     public static <T> T findArgByClassInArgs(Object[] args, Class<T> toFind){

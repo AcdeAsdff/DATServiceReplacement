@@ -11,11 +11,8 @@ import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.NotFinished;
 import com.linearity.utils.SimpleExecutorWithMode;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import de.robv.android.xposed.XposedBridge;
@@ -178,15 +175,9 @@ public class HookIBatteryStats {
         hookAllMethodsWithCache_Auto(hookClass,"noteBleScanReset",null);
         hookAllMethodsWithCache_Auto(hookClass,"noteBleScanResults",null);
 
-        hookAllMethodsWithCache_Auto(hookClass,"getCellularBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param->{
-            param.setResult(generateFakeCellularBatteryStats(Binder.getCallingUid()));
-        }));
-        hookAllMethodsWithCache_Auto(hookClass,"getWifiBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param->{
-            param.setResult(generateFakeWifiBatteryStats(Binder.getCallingUid()));
-        }));
-        hookAllMethodsWithCache_Auto(hookClass,"getGpsBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param->{
-            param.setResult(generateFakeGpsBatteryStats(Binder.getCallingUid()));
-        }));
+        hookAllMethodsWithCache_Auto(hookClass,"getCellularBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param-> param.setResult(generateFakeCellularBatteryStats(Binder.getCallingUid()))));
+        hookAllMethodsWithCache_Auto(hookClass,"getWifiBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param-> param.setResult(generateFakeWifiBatteryStats(Binder.getCallingUid()))));
+        hookAllMethodsWithCache_Auto(hookClass,"getGpsBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param-> param.setResult(generateFakeGpsBatteryStats(Binder.getCallingUid()))));
         hookAllMethodsWithCache_Auto(hookClass,"getWakeLockStats",new ArrayMap<>());//android 32
 //    hookAllMethodsWithCache_Auto(hookClass,"getBluetoothBatteryStats",BluetoothBatteryStats);
 //    hookAllMethodsWithCache_Auto(hookClass,"takeUidSnapshot",HealthStatsParceler);

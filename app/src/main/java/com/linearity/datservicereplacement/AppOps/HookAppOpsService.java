@@ -27,7 +27,7 @@ public class HookAppOpsService {
         Class<?> hookClass = XposedHelpers.findClassIfExists("com.android.server.appop.AppOpsService",lpparam.classLoader);
         if (hookClass != null){
             msgSamplingCOnfigClass = XposedHelpers.findClassIfExists("com.android.internal.app.MessageSamplingConfig",lpparam.classLoader);
-            hookIAppOpsService(hookClass);
+//            hookIAppOpsService(hookClass);
         }
     }
 
@@ -157,9 +157,7 @@ public class HookAppOpsService {
 
         hookAllMethodsWithCache_Auto(hookClass,"finishProxyOperation",null);
 
-        hookAllMethodsWithCache_Auto(hookClass,"checkPackage",
-                MODE_ALLOWED,
-                param -> isSystemApp(Binder.getCallingUid()) && isSystemApp((int)param.args[0]));
+        hookAllMethodsWithCache_Auto(hookClass,"checkPackage",MODE_ALLOWED);
         hookAllMethodsWithCache_Auto(hookClass,"collectRuntimeAppOpAccessMessage",null);
 
         hookAllMethodsWithCache_Auto(hookClass,"reportRuntimeAppOpAccessMessageAndGetConfig",new SimpleExecutorWithMode(MODE_BEFORE, param -> {
