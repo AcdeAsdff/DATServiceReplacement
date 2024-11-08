@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement;
 
+import static com.linearity.datservicereplacement.ActivityManagerService.HookAMS.doHook;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.EMPTY_PACKAGE_INFO;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.IThinkShouldFilterApplication;
 import static com.linearity.datservicereplacement.PackageManager.hookIPackageManager.hookGetPackageInfo;
@@ -23,13 +24,13 @@ import android.content.pm.PackageInfo;
 import android.os.Binder;
 import android.os.Bundle;
 
+import com.linearity.datservicereplacement.ActivityManagerService.HookAMS;
+import com.linearity.datservicereplacement.ActivityManagerService.HookIActivityManager;
 import com.linearity.datservicereplacement.AppOps.HookAppOpsService;
 import com.linearity.datservicereplacement.Battery.HookIBatteryStats;
 import com.linearity.datservicereplacement.Bluetooth.HookBluetooth;
 import com.linearity.datservicereplacement.Clipboard.HookIClipboard;
 import com.linearity.datservicereplacement.InputMethod.HookInputMethod;
-import com.linearity.datservicereplacement.Location.HookLocationManager;
-import com.linearity.datservicereplacement.Permission.HookPermissionManagerService;
 import com.linearity.datservicereplacement.PowerManager.HookIPowerStatsService;
 import com.linearity.datservicereplacement.Telecom.HookTelecomService;
 import com.linearity.utils.ExtendedRandom;
@@ -96,7 +97,7 @@ public class StartHook implements IXposedHookLoadPackage {
                         hookVibratorManager(param.args[1]);
                     }
                     else if(param.args[0].equals(Context.ACTIVITY_SERVICE)){//the real threat
-                        hookAMS(param.args[1].getClass());
+                        HookAMS.hookAMS(param.args[1].getClass());
                     }
 //                    else if(param.args[0].equals("bluetooth_manager")){
 //                        hookBluetoothManager(param.args[1]);
@@ -895,10 +896,9 @@ public class StartHook implements IXposedHookLoadPackage {
         }
         setOtherProperties();
 
-        hookClass = XposedHelpers.findClassIfExists("com.android.server.am.ActivityManagerService",XposedBridge.BOOTCLASSLOADER);
-        if (hookClass != null){
-            hookAMS(hookClass);
-        }
+        HookAMS.doHook(lpparam);
+        HookIActivityManager.doHook(lpparam);
+
 //        hookClass = XposedHelpers.findClassIfExists("android.app.ContextImpl",lpparam.classLoader);
 //        if (hookClass != null){
 //            hookContextImpl(hookClass);
@@ -968,36 +968,6 @@ public class StartHook implements IXposedHookLoadPackage {
 
     }
 
-    public static void hookAMS(Class<?> hookClass){
-        XposedBridge.hookAllMethods(hookClass, "systemReady", new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                mSystemReady = true;
-            }
-        });
-
-//        XposedBridge.hookAllMethods(hookClass, "startService", new XC_MethodHook() {
-//            @Override
-//            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//                super.beforeHookedMethod(param);
-//                int userid = (int) param.args[6];
-//                if (param.args[4] == null){return;}
-//                if (!isSystemApp(param.args[4].toString(),userid)){
-//                    LoggerLog("--------start service-----------");
-//                    StringBuilder sb = new StringBuilder();
-//                    for (Object o:param.args){
-//                        if (o != null){
-//                            sb.append(o.toString()).append("\n");
-//                        }else {
-//                            sb.append("null\n");
-//                        }
-//                    }
-//                    LoggerLog(sb.toString());
-//                }
-//            }
-//        });
-    }
     private void hookBluetoothManager(Class<?> hookClass) {
 
         XposedBridge.hookAllMethods(hookClass, "onTransact", new XC_MethodHook() {

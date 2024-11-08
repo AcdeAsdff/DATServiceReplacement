@@ -21,6 +21,7 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
+import android.os.Binder;
 import android.util.SparseArray;
 
 import androidx.annotation.Nullable;
@@ -46,8 +47,7 @@ public class hookIPackageManager {
         EMPTY_PACKAGE_INFO.packageName = "EMPTY";
     }
     public static Object pm = null;
-    
-    public static Class<?> ParceledListSlice;//android.content.pm.ParceledListSlice
+
     private static final Set<Class<?>> hooked = new HashSet<>();
     public static final Map<Integer,PackageInfo> nonSysPackages = new ConcurrentHashMap<>();
     public static final Map<Integer,PackageInfo> sysPackages = new ConcurrentHashMap<>();
@@ -178,6 +178,9 @@ public class hookIPackageManager {
         nonSysPackages.put(callingUID,callingPackageInfo);
         return false;
     }
+    public static boolean isSystemApp(String packageName){
+        return isSystemApp(packageName, Binder.getCallingUid()/100000);
+    }
     public static boolean isSystemApp(String packageName,int userid){
         if (packageName == null){
             return true;
@@ -229,30 +232,20 @@ public class hookIPackageManager {
         if (callingUID < 10000){
             return true;
         }
-        if (nonSysPackagesByName.containsKey(accessingPackageName)){
-            if (nonSysPackagesByName.get(accessingPackageName) != null){
-                if (nonSysPackagesByName.get(accessingPackageName).applicationInfo != null){
-                    return callingUID == nonSysPackagesByName.get(accessingPackageName).applicationInfo.uid;
-                }
-            }
-        }
-        return false;
+        PackageInfo nonSysPackageInfo = nonSysPackagesByName.getOrDefault(accessingPackageName,null);
+        if (nonSysPackageInfo == null){return false;}
+        if (nonSysPackageInfo.packageName == null){return false;}
+        return callingUID == nonSysPackageInfo.applicationInfo.uid;
     }
 
     //get package name for uid
     // return "";if not found || isSystemApp
     public static String getPackageName(int callingUid){
-        if (isSystemApp(callingUid)){
-            return "";
-        }
-        if (nonSysPackages.containsKey(callingUid)){
-            if (nonSysPackages.get(callingUid) != null){
-                if (nonSysPackages.get(callingUid).packageName != null){
-                    return nonSysPackages.get(callingUid).packageName;
-                }
-            }
-        }
-        return "";
+        if (isSystemApp(callingUid)){return "";}
+        PackageInfo nonSysPackageInfo = nonSysPackages.getOrDefault(callingUid,null);
+        if (nonSysPackageInfo == null){return "";}
+        if (nonSysPackageInfo.packageName == null){return "";}
+        return nonSysPackageInfo.packageName;
     }
 
     /**

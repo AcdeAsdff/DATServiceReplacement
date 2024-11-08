@@ -8,6 +8,7 @@ import android.os.Binder;
 import android.util.ArrayMap;
 
 import com.linearity.utils.ExtendedRandom;
+import com.linearity.utils.NotFinished;
 import com.linearity.utils.SimpleExecutorWithMode;
 
 import java.security.SecureRandom;
@@ -20,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
-
+@NotFinished
 public class HookIBatteryStats {
 
 

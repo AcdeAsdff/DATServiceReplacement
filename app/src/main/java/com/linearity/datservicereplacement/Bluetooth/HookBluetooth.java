@@ -12,7 +12,6 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.pickFromArray_A
 import static com.linearity.datservicereplacement.ReturnIfNonSys.trueIfNonSys;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.trueIfNonSysUseAttrSource;
 import static com.linearity.datservicereplacement.StartHook.settingsForUid;
-import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.ReturnReplacements.returnNull;
 
 import android.bluetooth.BluetoothAdapter;

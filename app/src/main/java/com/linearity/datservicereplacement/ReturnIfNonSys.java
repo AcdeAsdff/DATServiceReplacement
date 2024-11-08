@@ -28,6 +28,7 @@ import android.util.SparseArray;
 
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
+import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 import com.linearity.utils.SystemAppChecker;
 
@@ -181,7 +182,42 @@ public class ReturnIfNonSys {
         }
     }
 
-    public static SystemAppChecker defaultSystemChecker = param -> isSystemApp(Binder.getCallingUid());
+    public static final SystemAppChecker defaultSystemChecker = param -> isSystemApp(Binder.getCallingUid());
+    public static final SystemAppChecker findStrInArgs = param -> isSystemApp(Binder.getCallingUid()) && isSystemApp(findArgByClassInArgs(param.args,String.class));
+    public static final SystemAppChecker findStrAndUidInArgs = param -> {
+        Integer uid = findArgByClassInArgs(param.args,int.class);
+        if (uid == null){
+            return isSystemApp(Binder.getCallingUid())
+                    && isSystemApp(
+                    findArgByClassInArgs(param.args,String.class));
+        }
+        return isSystemApp(Binder.getCallingUid())
+                && isSystemApp(
+                findArgByClassInArgs(param.args,String.class), uid);
+    };
+
+    public static final HashMap<Integer,SystemAppChecker> getSystemChecker_UidAt_map = new HashMap<>();
+    public static SystemAppChecker getSystemChecker_UidAt(int index){
+        if (getSystemChecker_UidAt_map.containsKey(index)){
+            return getSystemChecker_UidAt_map.get(index);
+        }
+        SystemAppChecker ret = param -> isSystemApp(Binder.getCallingUid())
+                && isSystemApp((int) param.args[2]);
+        getSystemChecker_UidAt_map.put(index,ret);
+        return ret;
+    }
+    public static final HashMap<Integer,SystemAppChecker> getSystemChecker_PackageNameAt_map = new HashMap<>();
+    public static SystemAppChecker getSystemChecker_PackageNameAt(int index){
+        if (getSystemChecker_UidAt_map.containsKey(index)){
+            return getSystemChecker_UidAt_map.get(index);
+        }
+        SystemAppChecker ret = param -> isSystemApp(Binder.getCallingUid())
+                && isSystemApp((String) param.args[2]);
+        getSystemChecker_UidAt_map.put(index,ret);
+        return ret;
+    }
+
+
     private static XC_MethodHook switchForSimpleExecutor(SimpleExecutorWithMode simpleExecutorWithMode){
         return switchForSimpleExecutor(simpleExecutorWithMode,defaultSystemChecker);
     }
@@ -1011,6 +1047,10 @@ public class ReturnIfNonSys {
 
         if (object instanceof SimpleExecutorWithMode){
             hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode) object,systemAppChecker);
+        }else if (object instanceof SimpleExecutor){
+            hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,
+                    new SimpleExecutorWithMode(MODE_BEFORE, (SimpleExecutor) object),
+                    systemAppChecker);
         }else {
             hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName, object,systemAppChecker);
         }
@@ -1074,4 +1114,27 @@ public class ReturnIfNonSys {
             }
         }
     }
+
+    public static <T> T findArgByClassInArgs(Object[] args, Class<T> toFind){
+        for (Object arg : args) {
+            if (arg == null) {
+                continue;
+            }
+            if (arg.getClass().isAssignableFrom(toFind)) {
+                return (T) arg;
+            }
+        }
+        return null;
+    }
+
+    public static int findClassIndexInArgs(Object[] args,Class<?> toFind){
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] == null){continue;}
+            if (args[i].getClass().isAssignableFrom(toFind)){
+                return i;
+            }
+        }
+        return -1;
+    }
+
 }
