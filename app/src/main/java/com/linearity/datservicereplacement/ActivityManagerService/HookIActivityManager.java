@@ -67,7 +67,8 @@ public class HookIActivityManager {
         hookAllMethodsWithCache_Auto(hookClass,"logFgsApiEnd",null);
         hookAllMethodsWithCache_Auto(hookClass,"logFgsApiStateChanged",null);
         hookAllMethodsWithCache_Auto(hookClass,"handleApplicationCrash",null);
-        hookAllMethodsWithCache_Auto(hookClass,"startActivity", (SimpleExecutor) param -> {
+        hookAllMethodsWithCache_Auto(hookClass,"startActivity",
+                (SimpleExecutor) param -> {
             Intent intent = (Intent) param.args[2];
             if (intent == null){return;}
             ComponentName mComponent = intent.getComponent();
@@ -87,8 +88,10 @@ public class HookIActivityManager {
                 return;
             }
             param.setResult(0);
-        },getSystemChecker_PackageNameAt(1));
-        hookAllMethodsWithCache_Auto(hookClass,"startActivityWithFeature", (SimpleExecutor) param -> {
+        },
+                getSystemChecker_PackageNameAt(1));
+        hookAllMethodsWithCache_Auto(hookClass,"startActivityWithFeature",
+                (SimpleExecutor) param -> {
             Intent intent = (Intent) param.args[3];
             if (intent == null){return;}
             ComponentName mComponent = intent.getComponent();
@@ -108,7 +111,8 @@ public class HookIActivityManager {
                 return;
             }
             param.setResult(0);
-        },getSystemChecker_PackageNameAt(1));
+        },
+                getSystemChecker_PackageNameAt(1));
         hookAllMethodsWithCache_Auto(hookClass,"unhandledBack",null);
 
 //        hookAllMethodsWithCache_Auto(hookClass,"finishActivity",true);
