@@ -24,6 +24,17 @@ Remake DeviceAddressTweaker in a (android) Service way so that apps (in China) w
 
 (不常更新，学校课多而且没用，还有点难逃)
 
+
+
+-------------------
+
+
+对于搞逆向的人来说，这在原理上是很容易的事情，因为Xposed是现成的。
+就是非常累，因为AOSP实在是太多了。
+我到现在也没拦住system_server给app所有的Configuration。
+不过隔壁dat_zygisk去改mediadrm应该鲜有人去做，可能搞机的人不喜欢藏设备指纹吧。
+
+
 -------------------
 一般来说，对system_server中方法的改造(这里特别指hook)分成两部分： 判断调用者(我们只关心是不是系统或者应用白名单在调用)、修改返回值(或者别的操作)
 
