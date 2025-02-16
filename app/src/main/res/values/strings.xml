@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">DATServiceReplacement</string>
+    <string-array name="scope">
+        <item>android</item>
+        <item>system</item>
+        <item>com.android.bluetooth</item>
+        <item>com.android.launcher3</item>
+        <item>com.android.permissioncontroller</item>
+        <item>com.android.server.telecom</item>
+        <item>com.android.location.fused</item>
+        <item>com.android.phone</item>
+        <item>com.android.nfc</item>
+        <item>com.android.wifi.resources</item>
+        <item>com.android.providers.userdictionary</item>
+        <item>com.android.providers.telephony</item>
+        <item>com.android.providers.blockednumber</item>
+        <item>com.android.providers.calendar</item>
+        <item>com.android.providers.downloads</item>
+        <item>com.android.providers.settings</item>
+        <item>com.android.providers.contacts</item>
+        <item>com.android.providers.media</item>
+        <item>com.android.providers.contactkeys</item>
+        <item>com.android.providers.downloads.ui</item>
+        <item>com.android.connectivity.resources</item>
+    </string-array>
+</resources>
