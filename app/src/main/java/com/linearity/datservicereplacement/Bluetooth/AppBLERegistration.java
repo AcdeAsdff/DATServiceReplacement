@@ -10,6 +10,7 @@ import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 
+import com.linearity.utils.AndroidConsts.BluetoothUuid;
 import com.linearity.utils.ExtendedRandom;
 
 import java.nio.charset.StandardCharsets;

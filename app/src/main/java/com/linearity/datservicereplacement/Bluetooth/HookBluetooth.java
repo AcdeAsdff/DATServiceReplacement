@@ -21,7 +21,6 @@ import static com.linearity.datservicereplacement.StartHook.isPublicHookedPoolRe
 
 import android.bluetooth.BluetoothAdapter;
 
-import com.linearity.datservicereplacement.Credential.HookCredential;
 import com.linearity.datservicereplacement.ReturnIfNonSys;
 import com.linearity.utils.ClassHookExecutor;
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
@@ -30,9 +29,6 @@ import com.linearity.utils.SimpleExecutor;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 @NotFinished
 public class HookBluetooth {

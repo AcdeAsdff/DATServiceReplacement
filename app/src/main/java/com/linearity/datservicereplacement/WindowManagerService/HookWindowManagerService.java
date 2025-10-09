@@ -1,7 +1,17 @@
 package com.linearity.datservicereplacement.WindowManagerService;
 
+import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
+import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE;
+import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+import static android.view.View.SYSTEM_UI_FLAG_LOW_PROFILE;
+import static android.view.WindowInsetsController.APPEARANCE_OPAQUE_STATUS_BARS;
+import static android.view.WindowInsetsController.APPEARANCE_SEMI_TRANSPARENT_STATUS_BARS;
 import static com.linearity.datservicereplacement.ActivityManagerService.HookIActivityManager.isActivityRecordSystem;
 import static com.linearity.datservicereplacement.ActivityManagerService.HookIActivityManager.modifyConfiguration;
+import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.getPackageName;
 import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.isSystemApp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findClassIndexAndObjectInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_BooleanAt;
@@ -18,11 +28,20 @@ import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Insets;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Binder;
 import android.util.Base64;
 import android.util.Pair;
+import android.view.InsetsFrameProvider;
+import android.view.InsetsSource;
+import android.view.InsetsState;
+import android.view.View;
+import android.view.WindowInsets;
 import android.view.WindowManager;
+
+import androidx.annotation.Nullable;
 
 import com.linearity.datservicereplacement.AppOps.HookAppOpsService;
 import com.linearity.utils.ExtendedRandom;
@@ -31,8 +50,15 @@ import com.linearity.utils.SimpleExecutorWithMode;
 import com.linearity.utils.SystemAppChecker;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
+import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -44,7 +70,122 @@ public class HookWindowManagerService {
         classesAndHooks.put("com.android.server.wm.Session", HookWindowManagerService::hookIWindowSession);
         classesAndHooks.put("com.android.server.wm.WindowState", HookWindowManagerService::hookWindowState);
         classesAndHooks.put("com.android.server.wm.RootWindowContainer", HookWindowManagerService::hookRootWindowContainer);
+        classesAndHooks.put("com.android.server.wm.DisplayPolicy", HookWindowManagerService::hookDisplayPolicy);
+        classesAndHooks.put("com.android.server.statusbar.StatusBarManagerService", HookWindowManagerService::hookStatusBarManagerService);
+        classesAndHooks.put("com.android.systemui.statusbar.StatusBarStateControllerImpl", HookWindowManagerService::hookStatusBarStateController);
     }
+    public static void hookStatusBarStateController(Class<?> hookClass){
+//        Set<String> toAvoid = new HashSet<>();
+//        toAvoid.add("setState");
+//        listenClass(hookClass,toAvoid);
+    }
+    public static void hookStatusBarManagerService(Class<?> hookClass){
+//        Set<String> toAvoid = new HashSet<>();
+//        toAvoid.add("getDisableFlags");
+//        toAvoid.add("onDisplayChanged");
+//        toAvoid.add("handleSystemKey");
+//        toAvoid.add("enforceStatusBar");
+//        toAvoid.add("onNotificationVisibilityChanged");
+//        toAvoid.add("-$$Nest$fgetmBar");
+//        toAvoid.add("$r8$lambda$f4g8csS8sA9WBCaVg_JpeSlGvUA");
+//        listenClass(hookClass,toAvoid);
+//        hookAllMethodsWithCache_Auto(hookClass,"disableForUser",)
+
+//        hookAllMethodsWithCache_Auto(hookClass,"getDisableFlags",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+//            LoggerLog(new Exception(param.getResult()
+//                    + "\n" + param.method
+//                    + "\n" + Arrays.deepToString(param.args)
+//                    + "\n" + Binder.getCallingUid()
+//                    + "\n" + getPackageName(Binder.getCallingUid())));
+//        }),noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,"setDisableFlags",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+//            LoggerLog(new Exception(param.getResult()
+//                    + "\n" + param.method
+//                    + "\n" + Arrays.deepToString(param.args)
+//                    + "\n" + Binder.getCallingUid()
+//                    + "\n" + getPackageName(Binder.getCallingUid())));
+//        }),noSystemChecker);
+    }
+    private static final int disableFlags = APPEARANCE_OPAQUE_STATUS_BARS
+            | APPEARANCE_SEMI_TRANSPARENT_STATUS_BARS;
+    public static void hookDisplayPolicy(Class<?> hookClass) {
+
+        XC_MethodHook before = new XC_MethodHook() {
+            private void forParams(WindowManager.LayoutParams params){
+                params.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+                params.flags |= WindowManager.LayoutParams.FLAG_SECURE;
+                params.flags -= WindowManager.LayoutParams.FLAG_SECURE;
+                params.systemUiVisibility |= SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+            }
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                for (Object o:param.args){
+                    if (o == null){continue;}
+                    if (o.getClass().getName().equals("com.android.server.wm.WindowState")){
+                        WindowManager.LayoutParams params = (WindowManager.LayoutParams) XposedHelpers.getObjectField(o,"mAttrs");
+                        if (params != null){
+                            forParams(params);
+                        }
+                    }
+                    else if (o instanceof WindowManager.LayoutParams params){
+                        forParams(params);
+                    }
+
+                }
+            }
+        };
+//        listenClass(hookClass,before);
+//        hookAllMethodsWithCache_Auto(hookClass,"getStatusBarManagerInternal",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+//            LoggerLog(new Exception(param.getResult()
+//                    + "\n" + param.method
+//                    + "\n" + Arrays.deepToString(param.args)
+//                    + "\n" + Binder.getCallingUid()
+//                    + "\n" + getPackageName(Binder.getCallingUid())));
+//        }),noSystemChecker);
+//        hookAllMethodsWithCache_Auto(WindowInsets.class,"statusBars",0,noSystemChecker);
+//        hookAllMethodsWithCache_Auto(WindowInsets.class,"systemBars",518,noSystemChecker);
+
+//        Set<String> toAvoid = new HashSet<>();
+//        toAvoid.add("onTransact");
+//        toAvoid.add("areSystemBarsForcedConsumedLw");
+//        toAvoid.add("calculateInsetsFrame");
+//        toAvoid.add("configureNavBarOpacity");
+//        toAvoid.add("configureStatusBarOpacity");
+//        toAvoid.add("getStatusBarManagerInternal");
+//        listenClass(hookClass,toAvoid);
+
+        hookAllMethodsWithCache_Auto(hookClass,"areSystemBarsForcedConsumedLw",true,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"configureStatusBarOpacity",(SimpleExecutor) param -> {
+            int flags = (int) param.args[0];
+            flags |= disableFlags;
+            flags -= disableFlags;
+
+            param.args[0] = flags;
+        },noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,"intersectsAnyInsets",(SimpleExecutor) param -> {
+//            InsetsState state = param.args[1];
+//            state.source
+//        },noSystemChecker);
+
+//        hookAllMethodsWithCache_Auto(hookClass,"shouldBeHiddenByKeyguard",(SimpleExecutor) param -> {
+//            Object windowState = param.args[0];
+//            if (param.args[0] != null){
+//                String name = XposedHelpers.callMethod(windowState,"getWindowTag") + "";
+//                if (Objects.equals(name,"StatusBar")){
+//                    param.setResult(true);
+//                }
+//            }
+//        },noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"isFullyTransparentAllowed",true,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"topAppHidesSystemBar",true,noSystemChecker);
+//        hookAllMethodsWithCache_Auto(InsetsSource.class,"getFlags",(SimpleExecutor) param -> {
+//            InsetsSource thisObj = (InsetsSource) param.thisObject;
+//            int flags = XposedHelpers.getIntField(thisObj,"mFlags");
+//            XposedHelpers.setIntField(thisObj,"mFlags",flags | (1<<2));
+//        },noSystemChecker);
+    }
+
     public static void hookIWindowManager(Class<?> hookClass){
         if (isPublicHookedPoolRegistered(hookClass)){return;}
         hookAllMethodsWithCache_Auto(hookClass,"startViewServer",true);
@@ -331,7 +472,122 @@ public class HookWindowManagerService {
         hookAllMethodsWithCache_Auto(hookClass,"getProcessGlobalConfiguration",new SimpleExecutorWithMode(MODE_AFTER,modifyConfigurationResult));
         hookAllMethodsWithCache_Auto(hookClass,"getLastReportedConfiguration",new SimpleExecutorWithMode(MODE_AFTER,modifyConfigurationResult));
         hookAllMethodsWithCache_Auto(hookClass,"getConfiguration",new SimpleExecutorWithMode(MODE_AFTER,modifyConfigurationResult));
+//        hookAllMethodsWithCache_Auto(hookClass,"isRequestedVisible",(SimpleExecutor)param -> {
+//            int type = (int) param.args[0];
+//            if (type == WindowInsets.Type.statusBars()){
+//                param.setResult(false);
+//            }
+//        },noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,"canBeHiddenByKeyguard",(SimpleExecutor)param -> {
+//            Object windowState = param.thisObject;
+//            if (checkStatusBarWindowState(windowState)){
+//                modifyStatusBarWindowState(windowState);
+//                param.setResult(true);
+//            }
+//        },noSystemChecker);
 
+        hookAllMethodsWithCache_Auto(hookClass,"isVisible",(SimpleExecutor)param -> {
+            if (checkStatusBarWindowState(param.thisObject)){
+                param.setResult(false);
+            }
+        },noSystemChecker);
+
+//        hookAllMethodsWithCache_Auto(hookClass,"isSecureLocked",false,noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,"getDisableFlags",(SimpleExecutor)param -> checkAndModifyStatusBarWindowState(param.thisObject),noSystemChecker);
+
+//        SimpleExecutorWithMode executor = new SimpleExecutorWithMode(MODE_AFTER,param -> {
+//            if (checkStatusBarWindowState(param.thisObject)){
+//                InsetsSource result = (InsetsSource) param.getResult();
+//                if (result != null){
+//                    if (result.getType() == 1){
+//                        result.setVisible(false);
+//                        Rect currentFrame = result.getFrame();
+//                        currentFrame.bottom = 0;
+//                        currentFrame.top = 0;
+//                    }
+//                }
+//            }
+//        });
+//        hookAllMethodsWithCache_Auto(hookClass,"getInsetsState",executor,noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,"getInsetsStateWithVisibilityOverride",executor,noSystemChecker);
+
+//        Set<String> toAvoid = new HashSet<>();
+//        toAvoid.add("getWindowTag");
+//        toAvoid.add("getName");
+//        toAvoid.add("writeIdentifierToProto");
+//        toAvoid.add("getProtoFieldId");
+//        toAvoid.add("dumpDebug");
+//        toAvoid.add("equals");
+//        toAvoid.add("toString");
+//        toAvoid.add("isSelfAnimating");
+//        toAvoid.add("updateScaleIfNeeded");
+//        toAvoid.add("computeDragResizing");
+//        toAvoid.add("getWindowType");
+//        toAvoid.add("getKeepClearAreas");
+//        toAvoid.add("getKeyInterceptionInfo");
+//        toAvoid.add("assignLayer");
+//        toAvoid.add("isVisibleRequestedOrAdding");
+//        toAvoid.add("updateFrameRateSelectionPriorityIfNeeded");
+//        toAvoid.add("hasMoved");
+//        listenClass(hookClass,toAvoid, new XC_MethodHook() {
+//            @Override
+//            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                if (checkStatusBarWindowState(param.thisObject)){
+////                    modifyStatusBarWindowState(param.thisObject);
+//                    LoggerLog(param.method + " " + param.getResult());
+//                }
+//            }
+//        });
+
+
+    }
+    private static Method WindowState_getWindowTag = null;
+    public static void checkAndModifyStatusBarWindowState(@Nullable Object probablyStatusBarState) {
+        if (checkStatusBarWindowState(probablyStatusBarState)){
+            modifyStatusBarWindowState(probablyStatusBarState);
+        }
+    }
+    public static boolean checkStatusBarWindowState(@Nullable Object probablyStatusBarState){
+        try {
+            if (probablyStatusBarState == null){return false;}
+            if (WindowState_getWindowTag == null){
+                WindowState_getWindowTag = XposedHelpers.findMethodExact(probablyStatusBarState.getClass(),"getWindowTag");
+            }
+            String name = ""+WindowState_getWindowTag.invoke(probablyStatusBarState);
+            return Objects.equals(name, "StatusBar");
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+    public static void modifyStatusBarWindowState(Object windowState){
+        int disableFlags = XposedHelpers.getIntField(windowState,"mDisableFlags");
+        disableFlags &= ~(
+                SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | SYSTEM_UI_FLAG_FULLSCREEN
+                | SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | SYSTEM_UI_FLAG_IMMERSIVE
+                | SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | SYSTEM_UI_FLAG_LOW_PROFILE
+                );
+        XposedHelpers.setIntField(windowState,"mDisableFlags",disableFlags);
+
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) XposedHelpers.getObjectField(windowState,"mAttrs");
+        if (params != null){
+            params.alpha = 0;
+            params.height = 1;
+            for (InsetsFrameProvider provider:params.providedInsets){
+                provider.setInsetsSize(Insets.NONE);
+            }
+            for (WindowManager.LayoutParams rotationParam : params.paramsForRotation){
+                rotationParam.alpha = 0;
+                rotationParam.height = 1;
+                for (InsetsFrameProvider provider:rotationParam.providedInsets){
+                    provider.setInsetsSize(Insets.NONE);
+                }
+            }
+        }
     }
 
 }

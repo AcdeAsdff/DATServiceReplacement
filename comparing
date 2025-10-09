@@ -1,0 +1,48 @@
+{
+mDisplayFrame=Rect(0, 0 - 1080, 2400),
+mDisplayCutout=DisplayCutout{
+    insets=Rect(0, 0 - 0, 0)
+    waterfall=Insets{left=0, top=0, right=0, bottom=0}
+    boundingRect={
+        Bounds=[
+        Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)
+        ]
+    }
+     cutoutPathParserInfo={
+         CutoutPathParserInfo{
+         displayWidth=0
+         displayHeight=0
+         physicalDisplayWidth=0
+         physicalDisplayHeight=0
+         density={0.0}
+         cutoutSpec={}
+         rotation={0}
+         scale={0.0}
+         physicalPixelDisplaySizeRatio={0.0}}
+     }
+     sideOverrides=null
+},
+mRoundedCorners=RoundedCorners{
+[
+    RoundedCorner{position=TopLeft, radius=144, center=Point(144, 144)},
+    RoundedCorner{position=TopRight, radius=144, center=Point(936, 144)},
+    RoundedCorner{position=BottomRight, radius=144, center=Point(936, 2256)},
+    RoundedCorner{position=BottomLeft, radius=144, center=Point(144, 2256)}
+    ]
+}
+mRoundedCornerFrame=Rect(0, 0 - 1080, 2400),
+mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(816, 0 - 1042, 88) rotation=0},
+mDisplayShape=DisplayShape{
+   spec=-1893857183 displayWidth=1080 displayHeight=2400 physicalPixelDisplaySizeRatio=1.0
+    rotation=0 offsetX=0 offsetY=0 scale=1.0},
+    mSources= {
+        InsetsSource: {c8600001 mType=navigationBars mFrame=[0,0][0,0] mVisible=true mFlags=SUPPRESS_SCRIM mSideHint=NONE mBoundingRects=null},
+        InsetsSource: {c8600004 mType=systemGestures mFrame=[0,0][82,2400] mVisible=true mFlags= mSideHint=LEFT mBoundingRects=null},
+        InsetsSource: {c8600005 mType=mandatorySystemGestures mFrame=[0,2312][1080,2400] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null},
+        InsetsSource: {c8600006 mType=tappableElement mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null},
+        InsetsSource: {c8600024 mType=systemGestures mFrame=[998,0][1080,2400] mVisible=true mFlags= mSideHint=RIGHT mBoundingRects=null},
+        InsetsSource: {d1dd0000 mType=statusBars mFrame=[0,0][1080,88] mVisible=false mFlags= mSideHint=TOP mBoundingRects=null},
+        InsetsSource: {d1dd0005 mType=mandatorySystemGestures mFrame=[0,0][1080,88] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null},
+    }
+ InsetsSource: {d1dd0006 mType=tappableElement mFrame=[0,0][1080,88] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}
+ }

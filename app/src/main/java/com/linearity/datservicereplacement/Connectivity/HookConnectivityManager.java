@@ -87,15 +87,15 @@ public class HookConnectivityManager {
     //TODO:Randomize
     public static void hookIConnectivityManager(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,IConnectivityManagerHookedPool)){return;}
-        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetwork",returnNetworkByCallingUID);//Network
-        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkForUid",returnNetworkByCallingUID);
-        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkInfo",FAKE_NETWORK_INFO_INSTANCE);
-        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkInfoForUid",FAKE_NETWORK_INFO_INSTANCE,getSystemChecker_UidAt(0));
-        hookAllMethodsWithCache_Auto(hookClass,"getNetworkInfo",FAKE_NETWORK_INFO_INSTANCE);
-        hookAllMethodsWithCache_Auto(hookClass,"getNetworkInfoForUid",FAKE_NETWORK_INFO_INSTANCE,getSystemChecker_UidAt(1));
-        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",FAKE_NETWORK_INFO_ARR);
-        hookAllMethodsWithCache_Auto(hookClass,"getNetworkForType",returnNetworkByCallingUID);
-        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworks",returnNetworkArrayByCallingUID);
+//        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetwork",returnNetworkByCallingUID);//Network
+//        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkForUid",returnNetworkByCallingUID);
+//        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkInfo",FAKE_NETWORK_INFO_INSTANCE);
+//        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkInfoForUid",FAKE_NETWORK_INFO_INSTANCE,getSystemChecker_UidAt(0));
+//        hookAllMethodsWithCache_Auto(hookClass,"getNetworkInfo",FAKE_NETWORK_INFO_INSTANCE);
+//        hookAllMethodsWithCache_Auto(hookClass,"getNetworkInfoForUid",FAKE_NETWORK_INFO_INSTANCE,getSystemChecker_UidAt(1));
+//        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",FAKE_NETWORK_INFO_ARR);
+//        hookAllMethodsWithCache_Auto(hookClass,"getNetworkForType",returnNetworkByCallingUID);
+//        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworks",returnNetworkArrayByCallingUID);
         hookAllMethodsWithCache_Auto(hookClass,"getDefaultNetworkCapabilitiesForUser",EmptyArrays.EMPTY_NETWORK_CAPABILITY_ARRAY,getSystemChecker_PackageNameAt(1));//NetworkCapabilities[]
         hookAllMethodsWithCache_Auto(hookClass,"isNetworkSupported",true);
         hookAllMethodsWithCache_Auto(hookClass,"getActiveLinkProperties",null);

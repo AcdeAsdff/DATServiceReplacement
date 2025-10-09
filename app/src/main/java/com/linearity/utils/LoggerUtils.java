@@ -60,8 +60,21 @@ public class LoggerUtils {
             }else {LoggerLog(TAG, "null");}
         }
 
+        public static final int MAX_LOG_LENGTH = 3000;
+
         public static void LoggerLog(String log){
-            LoggerLog(TAG, log);
+            if (log == null){
+                log = "null";
+            }
+            String logPrefix = "[hash" + log.hashCode() + "]";
+            int length = log.length();
+            int start = 0;
+            while (start < length) {
+                int end = Math.min(length, start + MAX_LOG_LENGTH);
+                String part = log.substring(start, end);
+                LoggerLog(TAG, logPrefix + part);
+                start = end;
+            }
         }
 
         public static void LoggerLog(String prefix,Throwable e){
@@ -71,7 +84,7 @@ public class LoggerUtils {
             for (StackTraceElement s:e.getStackTrace()){
                 sb.append("        at ").append(s).append("\n");
             }
-            LoggerLog(prefix,"--------------------------------");
+            LoggerLog(sb.toString());
         }
         public static void LoggerLog(Throwable e){
             StringBuilder sb = new StringBuilder();
@@ -80,8 +93,8 @@ public class LoggerUtils {
             for (StackTraceElement s:e.getStackTrace()){
                 sb.append("        at ").append(s).append("\n");
             }
+            sb.append("--------------------------------");
             LoggerLog(sb.toString());
-            LoggerLog("--------------------------------");
         }
 
         public static void LoggerLog(String prefix, String log){

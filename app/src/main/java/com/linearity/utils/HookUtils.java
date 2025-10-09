@@ -6,8 +6,14 @@ import static com.linearity.utils.FakeClass.FakeReturnClasses.FakeReturnClassMap
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.ReturnReplacements.*;
 
+import android.content.res.Configuration;
 import android.os.Binder;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.linearity.utils.FakeClass.FakeReturnClasses.FakeReturnClassMap;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,13 +25,20 @@ import java.util.AbstractList;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.RandomAccess;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
@@ -33,6 +46,35 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class HookUtils {
+    public static final ExecutorService listenClassExecutor = Executors.newSingleThreadExecutor();
+    //key:class,value Avoid listening in class and method map.("subMap" key:className(markB),value:methodName)
+    //when listening class,met className and methodName in "subMap" will not shown
+    private static final Map<Class<?>,Multimap<String,String>> noListenMethodStacks = new HashMap<>();
+    public static final String ALL_METHOD = "0$allMethod";
+    public static void avoidListeningMethod(@Nullable Class<?> classBeingListened,@NotNull Class<?> avoidClass,@Nullable String avoidMethodName){
+        avoidListeningMethod(classBeingListened,avoidClass.getName(),avoidMethodName);
+    }
+    public static void avoidListeningMethod(@Nullable Class<?> classBeingListened,@NotNull String avoidClassName,@Nullable String avoidMethodName){
+        if (classBeingListened == null){
+            classBeingListened = Object.class;
+        }
+        if (avoidMethodName == null){
+            avoidMethodName = ALL_METHOD;
+        }
+        Multimap<String,String> avoids = noListenMethodStacks.get(classBeingListened);
+        if (avoids == null){
+            avoids = HashMultimap.create();
+            noListenMethodStacks.put(classBeingListened,avoids);
+        }
+        if (Objects.equals(ALL_METHOD,avoidMethodName)){
+            avoids.get(avoidClassName).clear();
+            avoids.put(avoidClassName, avoidMethodName);
+        }else if (!avoids.get(avoidClassName).contains(ALL_METHOD)){
+            avoids.put(avoidClassName, avoidMethodName);
+        }
+
+    }
+    public static final Queue<Runnable> listenMethodQueue = new ConcurrentLinkedQueue<>();
     public static XC_MethodHook.Unhook findAndHookMethodIfExists(String className, ClassLoader classLoader, String methodName, Object... parameterTypesAndCallback){
         Class<?> hookClass = XposedHelpers.findClassIfExists(className,classLoader);
         if (hookClass == null){LoggerLog("cannot find class: " + className);return null;}
@@ -166,15 +208,25 @@ public class HookUtils {
         }
     }
     public static void listenClass(@NotNull Class<?> selfClass){
+        listenClass(selfClass, Collections.emptySet(),null);
+    }
+    public static void listenClass(@NotNull Class<?> selfClass,@Nullable XC_MethodHook callBack){
+        listenClass(selfClass, Collections.emptySet(),callBack);
+    }
+    public static void listenClass(@NotNull Class<?> selfClass, @NonNull Set<String> toAvoid){
+        listenClass(selfClass, toAvoid,null);
+    }
+    public static void listenClass(@NotNull Class<?> selfClass, @NonNull Set<String> toAvoid,@Nullable XC_MethodHook callback){
         if (selfClass.isAssignableFrom(android.os.BinderProxy.class)){
             return;
         }
         if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}
         for (Method m:selfClass.getDeclaredMethods()){
-            if (m.getName().contains("toString")){
-                return;
+            String methodName = m.getName();
+            if (methodName.equals("toString") || toAvoid.contains(methodName)){
+                continue;
             }
-            listenMethod(m,selfClass);
+            listenMethod(m,selfClass,callback);
         }
     }
     public static void listenClassForNonSysUid(@NotNull Class<?> selfClass){
@@ -191,7 +243,11 @@ public class HookUtils {
     }
 
     public static void listenMethod(@NotNull Method m,@NotNull Class<?> selfClass){
-        XposedBridge.hookMethod(m, new XC_MethodHook() {
+        listenMethod(m,selfClass,null);
+    }
+    public static void listenMethod(@NotNull Method m,@NotNull Class<?> selfClass,@Nullable XC_MethodHook callback) {
+        listenMethodQueue.add(() -> XposedBridge.hookMethod(m, callback != null?callback:
+                new XC_MethodHook() {
 //            @Override
 //            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 //                super.beforeHookedMethod(param);
@@ -203,9 +259,9 @@ public class HookUtils {
 //            }
 
             @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) throws Throwable {
                 super.afterHookedMethod(param);
-                LoggerLog(new Exception("listening method[after]: "
+                Exception toShow = new Exception("listening method[after]: "
                         + "\n" + param.method
                         + "\n" + Arrays.deepToString(param.args)
                         + "\n" + param.thisObject
@@ -213,12 +269,19 @@ public class HookUtils {
                         + "\n" + Binder.getCallingUid()
                         + "\n" + getPackageName(Binder.getCallingUid())
 
-                ));
+                );
+                Runnable r = () -> {
+                    if (shouldAvoidListen(toShow, selfClass)) {
+                        return;
+                    }
+                    LoggerLog(toShow);
+                };
+                listenClassExecutor.submit(r);
             }
-        });
+        }));
     }
     public static void listenMethodForNonSysUid(@NotNull Method m,@NotNull Class<?> selfClass){
-        XposedBridge.hookMethod(m, new XC_MethodHook() {
+        listenMethodQueue.add(() -> XposedBridge.hookMethod(m, new XC_MethodHook() {
 //            @Override
 //            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
 //                super.beforeHookedMethod(param);
@@ -232,19 +295,67 @@ public class HookUtils {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 super.afterHookedMethod(param);
-                if (
-                        isSystemApp(Binder.getCallingUid())
+                Exception toShow = new Exception("listening method[after]: "
+                        + "\n" + param.method
+                        + "\n" + Arrays.deepToString(param.args)
+//                            + "\n" + param.thisObject
+                        + "\n" + param.getResult()
+                        + "\n" + Binder.getCallingUid() + "|" + isSystemApp(Binder.getCallingUid())
+                        + "\n" + getPackageName(Binder.getCallingUid())
+                );
+                Runnable r = () -> {
+                    if (
+                            isSystemApp(Binder.getCallingUid())
+                    ) {
+                    if (shouldAvoidListen(toShow,selfClass)){
+                        return;
+                    }
+                        LoggerLog(toShow);
+                    }
+                };
+                listenClassExecutor.submit(r);
+            }
+        }));
+    }
+    public static void startListen(){
+        Runnable nextRun;
+        while ((nextRun = listenMethodQueue.poll()) != null){
+            nextRun.run();
+        }
+    }
+
+    private static boolean shouldAvoidListen(Throwable toShow,@NotNull Class<?> selfClass){
+        Multimap<String,String> avoidClassAndMethodMap = noListenMethodStacks.get(selfClass);
+        if (avoidClassAndMethodMap != null){
+            for (StackTraceElement stackTraceElement:toShow.getStackTrace()){
+                if (shouldAvoidListenForMethod(avoidClassAndMethodMap,stackTraceElement)
                 ){
-                    LoggerLog(new Exception("listening method[after]: "
-                            + "\n" + param.method
-                            + "\n" + Arrays.deepToString(param.args)
-                            + "\n" + param.thisObject
-                            + "\n" + param.getResult()
-                            + "\n" + Binder.getCallingUid() + "|" + isSystemApp(Binder.getCallingUid())
-                            + "\n" + getPackageName(Binder.getCallingUid())
-                    ));
+                    return true;
                 }
             }
-        });
+        }
+        avoidClassAndMethodMap = noListenMethodStacks.get(Object.class);
+        if (avoidClassAndMethodMap != null){
+            for (StackTraceElement stackTraceElement:toShow.getStackTrace()){
+                if (shouldAvoidListenForMethod(avoidClassAndMethodMap,stackTraceElement)
+                ){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean shouldAvoidListenForMethod(Multimap<String,String> avoidClassAndMethodMap,StackTraceElement stackTraceElement){
+        if (avoidClassAndMethodMap
+                .get(stackTraceElement.getClassName())
+                .contains(stackTraceElement.getMethodName())
+                || avoidClassAndMethodMap
+                .get(stackTraceElement.getClassName())
+                .contains(ALL_METHOD)
+        ){
+            return true;
+        }
+        return false;
     }
 }

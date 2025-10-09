@@ -12,8 +12,6 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_WATCHED_A
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.showBefore;
 import static com.linearity.datservicereplacement.SomeClasses.CanUseUnsafe;
 import static com.linearity.datservicereplacement.SomeClasses.ComputerEngineClass;
 import static com.linearity.datservicereplacement.SomeClasses.ComputerEngineSettings_getIsolatedOwner;
@@ -26,9 +24,14 @@ import static com.linearity.datservicereplacement.SomeClasses.UnsafeClass;
 import static com.linearity.datservicereplacement.SomeClasses.WatchedArrayMapClass;
 import static com.linearity.datservicereplacement.SomeClasses.WatchedSparseIntArrayClass;
 import static com.linearity.datservicereplacement.SomeClasses.msgSamplingCOnfigClass;
+import static com.linearity.utils.HookUtils.ALL_METHOD;
+import static com.linearity.utils.HookUtils.avoidListeningMethod;
+import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 
+import android.app.WindowConfiguration;
+import android.content.res.Configuration;
 import android.os.Binder;
 import android.os.BinderProxy;
 import android.os.Build;
@@ -37,8 +40,6 @@ import android.util.Pair;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.io.CharStreams;
 import com.linearity.datservicereplacement.Accessibility.HookAccessibility;
 import com.linearity.datservicereplacement.Account.HookAccount;
 import com.linearity.datservicereplacement.ActivityManagerService.HookAMS;
@@ -47,7 +48,6 @@ import com.linearity.datservicereplacement.ActivityManagerService.HookIActivityT
 import com.linearity.datservicereplacement.Ad.HookAd;
 import com.linearity.datservicereplacement.Alarm.HookAlarm;
 import com.linearity.datservicereplacement.AppFilter.HookAppFilter;
-import com.linearity.datservicereplacement.AppGlobal.HookAppGlobal;
 import com.linearity.datservicereplacement.AppOps.HookAppOpsService;
 import com.linearity.datservicereplacement.Battery.HookIBattery;
 import com.linearity.datservicereplacement.Biometric.HookBiometric;
@@ -71,7 +71,6 @@ import com.linearity.datservicereplacement.NFC.HookNFC;
 import com.linearity.datservicereplacement.Notification.HookNotification;
 import com.linearity.datservicereplacement.PackageManager.HookIPackageManager;
 import com.linearity.datservicereplacement.Permission.HookPermissionManagerService;
-import com.linearity.datservicereplacement.Phone.HookGsmCdmaPhone;
 import com.linearity.datservicereplacement.PowerManager.HookIPowerStatsService;
 import com.linearity.datservicereplacement.PowerManager.HookPowerManager;
 import com.linearity.datservicereplacement.Search.HookSearch;
@@ -83,21 +82,15 @@ import com.linearity.datservicereplacement.Trust.HookTrust;
 import com.linearity.datservicereplacement.Wallpaper.HookWallpaper;
 import com.linearity.datservicereplacement.Wifi.HookWifiService;
 import com.linearity.datservicereplacement.WindowManagerService.HookWindowManagerService;
-import com.linearity.datservicereplacement.preventSystemCrushes.Prevents;
 import com.linearity.utils.ClassHookExecutor;
-import com.linearity.utils.ExtendedRandom;
+import com.linearity.utils.HookUtils;
 import com.linearity.utils.ServiceHooker;
 import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 import com.topjohnwu.superuser.NoShellException;
 import com.topjohnwu.superuser.Shell;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -109,7 +102,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -153,10 +145,12 @@ public class StartHook implements IXposedHookLoadPackage {
         WHITELIST_PACKAGE_NAMES.add("com.android.systemui");
         WHITELIST_PACKAGE_NAMES.add("com.android.externalstorage");
 
-        WHITELIST_PACKAGE_NAMES.add("com.github.kr328.clash");
-        WHITELIST_PACKAGE_NAMES.add("com.v2ray.ang");
+        WHITELIST_PACKAGE_NAMES.add("com.google.android.gms");
         WHITELIST_PACKAGE_NAMES.add("com.google.android.googlequicksearchbox");
         WHITELIST_PACKAGE_NAMES.add("com.google.android.inputmethod.latin");
+
+        WHITELIST_PACKAGE_NAMES.add("com.github.kr328.clash");
+        WHITELIST_PACKAGE_NAMES.add("com.v2ray.ang");
         WHITELIST_PACKAGE_NAMES.add("info.zamojski.soft.towercollector");
         WHITELIST_PACKAGE_NAMES.add("me.bmax.apatch");
         WHITELIST_PACKAGE_NAMES.add("top.niunaijun.blackdexa64");
@@ -167,6 +161,20 @@ public class StartHook implements IXposedHookLoadPackage {
         WHITELIST_PACKAGE_NAMES.add("com.lb.lwp_plus");
         WHITELIST_PACKAGE_NAMES.add("com.emanuelef.remote_capture");
         WHITELIST_PACKAGE_NAMES.add("com.pcapdroid.mltm");
+        WHITELIST_PACKAGE_NAMES.add("me.bingyue.IceCore");
+        WHITELIST_PACKAGE_NAMES.add("com.zcshou.gogogo");
+//        WHITELIST_PACKAGE_NAMES.add("com.lerist.fakelocation");
+        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.motion_emulator");
+        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.mock_location_plugin");
+        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.cp_plugin");
+        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.ws_plugin");
+        WHITELIST_PACKAGE_NAMES.add("jp.pxv.android");
+        WHITELIST_PACKAGE_NAMES.add("com.twitter.android");
+        WHITELIST_PACKAGE_NAMES.add("com.supercell.clashroyale");
+        WHITELIST_PACKAGE_NAMES.add("com.sega.ColorfulStage.en");
+        WHITELIST_PACKAGE_NAMES.add("com.sega.pjsekai");
+        WHITELIST_PACKAGE_NAMES.add("com.hermes.mk.asia.qooapp");
+//        WHITELIST_PACKAGE_NAMES.add("com.MobileTicket");
     }
 
     public static Multimap<String, ServiceHooker> listenServiceMap = HashMultimap.create();
@@ -563,6 +571,13 @@ public class StartHook implements IXposedHookLoadPackage {
 //        HookGsmCdmaPhone.doHook();
 //        HookAppGlobal.doHook();
 //        MessageFinder.hookMessage();
+
+//        avoidListeningMethod(Configuration.class,Configuration.class,"<init>");
+//        avoidListeningMethod(Configuration.class,HookIActivityManager.class,ALL_METHOD);
+////        avoidListeningMethod(Configuration.class,Configuration.class,"equals");
+////        avoidListeningMethod(Configuration.class,Configuration.class,"hashCode");
+//        listenClass(WindowConfiguration.class);
+        HookUtils.startListen();
     }
     public static void hookForClassLoader(ClassLoader classLoader){
         if (isSetRegistered(classLoader,iteratedClassLoaders)){return;}

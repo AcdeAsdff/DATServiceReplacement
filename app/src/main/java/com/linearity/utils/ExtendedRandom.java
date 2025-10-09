@@ -1,9 +1,9 @@
 package com.linearity.utils;
 
 import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.getPackageName;
-import static com.linearity.datservicereplacement.Bluetooth.BluetoothUuid.UUID_BYTES_128_BIT;
-import static com.linearity.datservicereplacement.Bluetooth.BluetoothUuid.UUID_BYTES_16_BIT;
-import static com.linearity.datservicereplacement.Bluetooth.BluetoothUuid.UUID_BYTES_32_BIT;
+import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_128_BIT;
+import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_16_BIT;
+import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_32_BIT;
 import static com.linearity.datservicereplacement.StartHook.publicSeed;
 
 import android.content.pm.ActivityInfo;
@@ -23,11 +23,10 @@ import android.util.SparseArray;
 
 import androidx.annotation.IntRange;
 
-import com.linearity.datservicereplacement.Bluetooth.BluetoothUuid;
+import com.linearity.utils.AndroidConsts.BluetoothUuid;
 import com.linearity.utils.FakeClass.java.util.CantUseArrayList;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 

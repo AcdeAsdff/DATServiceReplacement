@@ -1,4 +1,4 @@
-package com.linearity.datservicereplacement.Bluetooth;
+package com.linearity.utils.AndroidConsts;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
