@@ -1,10 +1,10 @@
 package com.linearity.datservicereplacement;
 
-import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.getPackageName;
-import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.isSystemApp;
-import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.nonSysPackages;
-import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.tryGetPM;
-import static com.linearity.datservicereplacement.StartHook.publicSeed;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.nonSysPackages;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.tryGetPM;
+import static com.linearity.utils.PublicSeed.publicSeed;
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_INT_ARRAY;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.*;
@@ -12,7 +12,6 @@ import static com.linearity.utils.SimpleExecutor.*;
 import android.bluetooth.BluetoothAdapter;
 import android.content.AttributionSource;
 import android.content.ContentProvider;
-import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.net.ConnectivityManager;
 import android.net.InetAddresses;
@@ -20,15 +19,12 @@ import android.net.LinkAddress;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.WorkSource;
 import android.telephony.TelephonyManager;
-import android.util.ArrayMap;
-import android.util.ArraySet;
 import android.util.Pair;
 import android.util.SparseArray;
 
-import com.linearity.datservicereplacement.Connectivity.NetworkConstructUtils;
+import com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils;
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
 import com.linearity.utils.ObjectsToString;
@@ -38,7 +34,6 @@ import com.linearity.utils.SystemAppChecker;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

@@ -10,7 +10,7 @@ import static android.content.res.Configuration.GRAMMATICAL_GENDER_FEMININE;
 import static android.content.res.Configuration.GRAMMATICAL_GENDER_MASCULINE;
 import static android.content.res.Configuration.GRAMMATICAL_GENDER_NEUTRAL;
 import static android.content.res.Configuration.GRAMMATICAL_GENDER_NOT_SPECIFIED;
-import static com.linearity.datservicereplacement.StartHook.publicSeed;
+import static com.linearity.utils.PublicSeed.publicSeed;
 
 import android.content.res.Configuration;
 

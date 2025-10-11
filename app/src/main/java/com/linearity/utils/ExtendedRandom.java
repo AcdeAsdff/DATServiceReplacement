@@ -1,10 +1,10 @@
 package com.linearity.utils;
 
-import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.getPackageName;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_128_BIT;
 import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_16_BIT;
 import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_32_BIT;
-import static com.linearity.datservicereplacement.StartHook.publicSeed;
+import static com.linearity.utils.PublicSeed.publicSeed;
 
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;

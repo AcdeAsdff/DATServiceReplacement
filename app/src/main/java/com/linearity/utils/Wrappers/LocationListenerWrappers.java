@@ -1,8 +1,7 @@
 package com.linearity.utils.Wrappers;
 
-import static com.linearity.datservicereplacement.Location.HookLocationManager.LocationGetter.getLocationByCurrentTimestamp;
-import static com.linearity.datservicereplacement.Location.HookLocationManager.LocationGetter.getLocationsByCurrentTimestamp;
-import static com.linearity.datservicereplacement.Location.HookLocationManager.hookILocationListener;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.getLocationByCurrentTimestamp;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.getLocationsByCurrentTimestamp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYLIST;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
@@ -21,7 +20,6 @@ import android.location.IGnssStatusListener;
 import android.location.ILocationCallback;
 import android.location.ILocationListener;
 import android.location.Location;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.IRemoteCallback;
 import android.os.RemoteException;

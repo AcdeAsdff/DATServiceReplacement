@@ -1,7 +1,7 @@
 package com.linearity.utils.FakeInfo;
 
-import static com.linearity.datservicereplacement.Phone.GsmCdmaPhoneConstructor.DEVICE_ID;
-import static com.linearity.datservicereplacement.StartHook.publicSeed;
+import static com.linearity.utils.Phone.GsmCdmaPhoneConstructor.DEVICE_ID;
+import static com.linearity.utils.PublicSeed.publicSeed;
 import static com.linearity.utils.ExtendedRandom.SYSTEM_INSTANCE;
 
 import android.text.format.DateFormat;

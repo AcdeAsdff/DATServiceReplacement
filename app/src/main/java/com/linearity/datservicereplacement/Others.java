@@ -1,20 +1,12 @@
 package com.linearity.datservicereplacement;
 
-import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
-
-import android.content.res.Configuration;
-
-import com.linearity.datservicereplacement.ActivityManagerService.HookIActivityManager;
 
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 
 public class Others {
 
