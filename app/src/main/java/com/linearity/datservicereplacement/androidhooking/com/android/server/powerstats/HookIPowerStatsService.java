@@ -1,13 +1,9 @@
-package com.linearity.datservicereplacement.PowerManager;
+package com.linearity.datservicereplacement.androidhooking.com.android.server.powerstats;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 
-import com.linearity.datservicereplacement.ContentProviders.HookSettingsProvider;
 import com.linearity.utils.NotFinished;
-
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 @NotFinished
 public class HookIPowerStatsService {

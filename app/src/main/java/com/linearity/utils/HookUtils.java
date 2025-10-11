@@ -1,12 +1,11 @@
 package com.linearity.utils;
 
-import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.getPackageName;
-import static com.linearity.datservicereplacement.PackageManager.PackageManagerUtils.isSystemApp;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
 import static com.linearity.utils.FakeClass.FakeReturnClasses.FakeReturnClassMap.fakeObjects;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.ReturnReplacements.*;
 
-import android.content.res.Configuration;
 import android.os.Binder;
 
 import androidx.annotation.NonNull;
@@ -220,9 +219,12 @@ public class HookUtils {
         if (selfClass.isAssignableFrom(android.os.BinderProxy.class)){
             return;
         }
-        if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}
+//        if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}
         for (Method m:selfClass.getDeclaredMethods()){
             String methodName = m.getName();
+            if (Modifier.isAbstract(m.getModifiers())){
+                continue;
+            }
             if (methodName.equals("toString") || toAvoid.contains(methodName)){
                 continue;
             }
