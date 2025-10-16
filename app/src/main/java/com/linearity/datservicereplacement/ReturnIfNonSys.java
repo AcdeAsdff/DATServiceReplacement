@@ -640,13 +640,17 @@ public class ReturnIfNonSys {
 
         // === Internal helper ===
         private static String resolveUsing(String name, Pattern[] patterns) {
-            if (name == null) return null;
-            for (Pattern p : patterns) {
-                Matcher m = p.matcher(name);
-                if (m.find()) {
-                    String real = m.group("name");
-                    if (real != null && !real.isEmpty()) return real;
+            try {
+                if (name == null) return null;
+                for (Pattern p : patterns) {
+                    Matcher m = p.matcher(name);
+                    if (m.find()) {
+                        String real = m.group("name");
+                        if (real != null && !real.isEmpty()) return real;
+                    }
                 }
+            }catch (Exception e){
+                LoggerLog(e);
             }
             return name; // fallback — not synthetic or unknown pattern
         }

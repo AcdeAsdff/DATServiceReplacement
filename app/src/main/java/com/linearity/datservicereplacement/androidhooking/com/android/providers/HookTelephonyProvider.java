@@ -5,6 +5,9 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsW
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showBefore;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 
+import com.linearity.utils.NotFinished;
+
+@NotFinished
 public class HookTelephonyProvider {
 
 

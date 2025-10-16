@@ -175,6 +175,7 @@ public class StartHook implements IXposedHookLoadPackage {
         WHITELIST_PACKAGE_NAMES.add("com.sega.ColorfulStage.en");
         WHITELIST_PACKAGE_NAMES.add("com.sega.pjsekai");
         WHITELIST_PACKAGE_NAMES.add("com.hermes.mk.asia.qooapp");
+        WHITELIST_PACKAGE_NAMES.add("com.drdisagree.colorblendr");
 //        WHITELIST_PACKAGE_NAMES.add("com.MobileTicket");
     }
 
@@ -532,7 +533,6 @@ public class StartHook implements IXposedHookLoadPackage {
         HookIActivityTaskManager.doHook();
 
         HookKeyGuard.doHook();
-        //causes crush,why?
         HookTrust.doHook();
 
         HookAlarm.doHook();
@@ -547,8 +547,8 @@ public class StartHook implements IXposedHookLoadPackage {
         HookNFC.doHook();
 
         HookTelecomService.doHook();
-        HookTelephony.doHook();
-        HookTelephonyProvider.doHook();
+//        HookTelephony.doHook();//causes endless reboot TODO:Find out why
+//        HookTelephonyProvider.doHook();//I didn't even implement it.//TODO: implement
 
         if (hookLocation){
             HookLocationManager.doHook();
@@ -574,7 +574,8 @@ public class StartHook implements IXposedHookLoadPackage {
 
         HookJobSchedulerService.doHook();
 
-        Others.doHook();
+//        Others.doHook();
+
 //        HookGsmCdmaPhone.doHook();
 //        HookAppGlobal.doHook();
 //        MessageFinder.hookMessage();

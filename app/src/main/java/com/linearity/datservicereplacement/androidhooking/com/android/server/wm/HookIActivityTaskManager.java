@@ -65,6 +65,7 @@ public class HookIActivityTaskManager {
                 return true;
             }else if(action.equals("android.intent.action.VIEW")){
                 if (!isUriSystem(i.getData())){
+                    LoggerLog("cancelled:"+i.getData().toString());
                     return true;
                 }
             }
@@ -124,9 +125,9 @@ public class HookIActivityTaskManager {
         LoggerLog(new Exception("startActivities_allowed:"+ Arrays.deepToString(param.args)));
     };
     public static void hookIActivityTaskManager(Class<?> hookClass){
-        Set<String> toAvoid = new HashSet<>();
-        toAvoid.add("logAppTooSlow");
-        listenClassForNonSysUid(hookClass,toAvoid);
+//        Set<String> toAvoid = new HashSet<>();
+//        toAvoid.add("logAppTooSlow");
+//        listenClassForNonSysUid(hookClass,toAvoid);
 
         hookAllMethodsWithCache_Auto(hookClass,"startActivity",startActivityReturnInt,getSystemChecker_PackageNameAt(1));
 //        hookAllMethodsWithCache_Auto(hookClass,"startActivityFromRecents",0);

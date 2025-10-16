@@ -49,9 +49,9 @@ public class HookJobSchedulerService {
     }
 
     private static void hookJobSchedulerService(Class<?> hookClass){
-        hookAllMethodsWithCache_Auto(hookClass,"scheduleAsPackage", JobScheduler.RESULT_SUCCESS,getSystemChecker_UidAt(2));
         Set<String> toAvoid = new HashSet<>();
         toAvoid.add("scheduleAsPackage");
 //        listenClass(hookClass,toAvoid);
+        hookAllMethodsWithCache_Auto(hookClass,"scheduleAsPackage", JobScheduler.RESULT_SUCCESS,getSystemChecker_UidAt(2));
     }
 }
