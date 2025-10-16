@@ -13,6 +13,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
+import com.linearity.utils.NotFinished;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -23,6 +24,7 @@ import java.util.Set;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 
+@NotFinished
 public class HookConnectivityManager {
 
     public static void doHook(){

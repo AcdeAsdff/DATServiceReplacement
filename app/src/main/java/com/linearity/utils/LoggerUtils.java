@@ -158,7 +158,7 @@ public class LoggerUtils {
         }
 
         public static void showObjectFields(Object obj, String prefix){
-            showObjectFields(obj, prefix,new HashSet<Object>());
+            showObjectFields(obj, prefix,new HashSet<>());
         }
 
         public static void showObjectFields(Object obj, String prefix, HashSet<Object> filter) {

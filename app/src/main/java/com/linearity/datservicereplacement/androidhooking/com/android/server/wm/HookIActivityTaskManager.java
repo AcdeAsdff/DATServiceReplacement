@@ -1,30 +1,56 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.wm;
 
+import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_UidAt;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager.modifyConfigurationExecutor;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.fakePM;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findArgByClassInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findClassIndexAndObjectInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.pm;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.tryGetPM;
+import static com.linearity.utils.HookUtils.listenClass;
+import static com.linearity.utils.HookUtils.listenClassForNonSysUid;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.UriUtils.isUriSystem;
 
+import android.app.AndroidAppHelper;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ParceledListSlice;
+import android.content.pm.ResolveInfo;
 import android.os.Binder;
+import android.os.UserHandle;
+import android.permission.PermissionManager;
 import android.util.Pair;
 
 import com.linearity.utils.SimpleExecutor;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+
+import de.robv.android.xposed.XposedHelpers;
 
 public class HookIActivityTaskManager {
 
     public static void doHook(){
         classesAndHooks.put("com.android.server.wm.ActivityTaskManagerService", HookIActivityTaskManager::hookIActivityTaskManager);
     }
+
+    /**
+     *
+     * @param i
+     * @return true if should disallow this
+     */
     public static boolean startActivityIntentFilter(Intent i){
         if (i == null){
             return false;
@@ -35,8 +61,12 @@ public class HookIActivityTaskManager {
             return false;
         }
         if (action != null){
-            if (action.startsWith("android.content.pm.action.REQUEST_PERMISSIONS")){
+            if (action.equals("android.content.pm.action.REQUEST_PERMISSIONS")){
                 return true;
+            }else if(action.equals("android.intent.action.VIEW")){
+                if (!isUriSystem(i.getData())){
+                    return true;
+                }
             }
         }
         return false;
@@ -94,6 +124,9 @@ public class HookIActivityTaskManager {
         LoggerLog(new Exception("startActivities_allowed:"+ Arrays.deepToString(param.args)));
     };
     public static void hookIActivityTaskManager(Class<?> hookClass){
+        Set<String> toAvoid = new HashSet<>();
+        toAvoid.add("logAppTooSlow");
+        listenClassForNonSysUid(hookClass,toAvoid);
 
         hookAllMethodsWithCache_Auto(hookClass,"startActivity",startActivityReturnInt,getSystemChecker_PackageNameAt(1));
 //        hookAllMethodsWithCache_Auto(hookClass,"startActivityFromRecents",0);

@@ -1,3 +1,4 @@
+
 precision mediump float;
 
 uniform sampler2D uTexture;
@@ -49,6 +50,11 @@ float deltaE(vec3 c1, vec3 c2) {
     return sqrt(dot(diff, diff));
 }
 
+float rand(vec2 co) {
+    // Generates repeatable pseudo-random noise per pixel
+    return fract(sin(dot(co.xy ,vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 void main() {
     vec2 onePixel = 1.0 / texSize;
     vec4 c = texture2D(uTexture, vTexCoord);
@@ -60,11 +66,35 @@ void main() {
     // neighbors: top, left, top-left
     vec4 top = texture2D(uTexture, vTexCoord + vec2(0.0, -onePixel.y));
     vec4 left = texture2D(uTexture, vTexCoord + vec2(-onePixel.x, 0.0));
-    vec4 tl = texture2D(uTexture, vTexCoord + vec2(-onePixel.x, -onePixel.y));
+    //    vec4 tl = texture2D(uTexture, vTexCoord + vec2(-onePixel.x, -onePixel.y));
 
-    if(deltaE(c.rgb, top.rgb) < deltaThreshold) { sum += top; count += 1.0; }
-    if(deltaE(c.rgb, left.rgb) < deltaThreshold) { sum += left; count += 1.0; }
-    if(deltaE(c.rgb, tl.rgb) < deltaThreshold) { sum += tl; count += 1.0; }
+    if(deltaE(c.rgb, top.rgb) < deltaThreshold) { sum = top;}
+    if(deltaE(c.rgb, left.rgb) < deltaThreshold) { sum = left;}
+    //    if(deltaE(c.rgb, tl.rgb) < deltaThreshold) { sum += tl;}
 
-    gl_FragColor = sum / count;
-}
+    // Quantization step (0–255 domain)
+    float stepSize = 16.0;
+    float noiseStrength = pow(2.0, eraseDigits); // replaces (1 << eraseDigits)
+
+    // Convert to 0–255
+    vec4 rgba255 = sum * 255.0;
+    rgba255 = floor(rgba255 / stepSize + 0.5) * stepSize;
+
+    // --- Add noise ---
+    vec4 noise = vec4(
+    fract(sin(dot(vTexCoord * 13.1, vec2(12.9898,78.233))) * 43758.5453),
+    fract(sin(dot(vTexCoord * 17.7, vec2(12.9898,78.233))) * 43758.5453),
+    fract(sin(dot(vTexCoord * 19.3, vec2(12.9898,78.233))) * 43758.5453),
+    fract(sin(dot(vTexCoord * 23.9, vec2(12.9898,78.233))) * 43758.5453)
+    ) * noiseStrength - (noiseStrength / 2.0);
+
+    rgba255 += noise;
+    rgba255 = clamp(rgba255, 0.0, 255.0);
+
+    // Back to 0–1 range
+    vec4 quantized = rgba255 / 255.0;  // no "vec4" redeclaration
+
+    gl_FragColor = quantized;
+}//ERROR: 0:94: 'assign' :  cannot convert from '4-component vector of float' to 'float'
+//ERROR: 0:96: 'assign' :  cannot convert from 'float' to 'FragColor 4-component vector of float'
+//ERROR: 3 compilation errors.  No code generated.

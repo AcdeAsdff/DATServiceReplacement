@@ -165,7 +165,7 @@ public final class BluetoothUuid {
             return uuidA.length == 0;
         }
 
-        HashSet<ParcelUuid> uuidSet = new HashSet<ParcelUuid>(Arrays.asList(uuidA));
+        HashSet<ParcelUuid> uuidSet = new HashSet<>(Arrays.asList(uuidA));
         for (ParcelUuid uuid : uuidB) {
             if (uuidSet.contains(uuid)) return true;
         }
@@ -226,7 +226,7 @@ public final class BluetoothUuid {
             shortUuid = uuidBytes[0] & 0xFF;
             shortUuid += (uuidBytes[1] & 0xFF) << 8;
             shortUuid += (uuidBytes[2] & 0xFF) << 16;
-            shortUuid += (uuidBytes[3] & 0xFF) << 24;
+            shortUuid += (long) (uuidBytes[3] & 0xFF) << 24;
         }
         long msb = BASE_UUID.getUuid().getMostSignificantBits() + (shortUuid << 32);
         long lsb = BASE_UUID.getUuid().getLeastSignificantBits();

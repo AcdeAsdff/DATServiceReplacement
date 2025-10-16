@@ -1,5 +1,6 @@
 package com.linearity.utils;
 
+import static com.linearity.datservicereplacement.ReturnIfNonSys.SyntheticNameResolver.resolveMethodName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
 import static com.linearity.utils.FakeClass.FakeReturnClasses.FakeReturnClassMap.fakeObjects;
@@ -221,7 +222,7 @@ public class HookUtils {
         }
 //        if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}
         for (Method m:selfClass.getDeclaredMethods()){
-            String methodName = m.getName();
+            String methodName = resolveMethodName(m.getName());
             if (Modifier.isAbstract(m.getModifiers())){
                 continue;
             }
@@ -231,14 +232,22 @@ public class HookUtils {
             listenMethod(m,selfClass,callback);
         }
     }
+
     public static void listenClassForNonSysUid(@NotNull Class<?> selfClass){
+        listenClass(selfClass, Collections.emptySet());
+    }
+    public static void listenClassForNonSysUid(@NotNull Class<?> selfClass, @NonNull Set<String> toAvoid){
         if (selfClass.isAssignableFrom(android.os.BinderProxy.class)){
             return;
         }
-        if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}
+//        if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}
         for (Method m:selfClass.getDeclaredMethods()){
-            if (m.getName().contains("toString")){
-                return;
+            String methodName = resolveMethodName(m.getName());
+            if (Modifier.isAbstract(m.getModifiers())){
+                continue;
+            }
+            if (methodName.equals("toString") || toAvoid.contains(methodName)){
+                continue;
             }
             listenMethodForNonSysUid(m,selfClass);
         }
@@ -306,12 +315,10 @@ public class HookUtils {
                         + "\n" + getPackageName(Binder.getCallingUid())
                 );
                 Runnable r = () -> {
-                    if (
-                            isSystemApp(Binder.getCallingUid())
-                    ) {
-                    if (shouldAvoidListen(toShow,selfClass)){
-                        return;
-                    }
+                    if (!isSystemApp(Binder.getCallingUid())) {
+                        if (shouldAvoidListen(toShow,selfClass)){
+                            return;
+                        }
                         LoggerLog(toShow);
                     }
                 };

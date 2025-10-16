@@ -3,6 +3,7 @@ package com.linearity.datservicereplacement.androidhooking.com.android.server.am
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.utils.ExtendedRandom.SYSTEM_INSTANCE;
+import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 
 import android.os.Binder;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
-@NotFinished
+@NotFinished//TODO: qq can still get power remaining
 public class HookIBattery {
 
 
@@ -90,6 +91,7 @@ public class HookIBattery {
         return ret;
     }
     public static void hookIBatteryStats(Class<?> hookClass){
+//        listenClass(hookClass);
         hookAllMethodsWithCache_Auto(hookClass,"noteStartSensor",null);
         hookAllMethodsWithCache_Auto(hookClass,"noteStopSensor",null);
         hookAllMethodsWithCache_Auto(hookClass,"noteStartVideo",null);
@@ -192,6 +194,7 @@ public class HookIBattery {
     }
 
     public static void hookIBatteryPropertiesRegistrar(Class<?> hookClass){
+//        listenClass(hookClass);
         hookAllMethodsWithCache_Auto(hookClass,"getProperty",0);
         hookAllMethodsWithCache_Auto(hookClass,"scheduleUpdate",null);
     }

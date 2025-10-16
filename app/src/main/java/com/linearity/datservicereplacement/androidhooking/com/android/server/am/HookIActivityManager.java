@@ -203,9 +203,7 @@ public class HookIActivityManager {
         }
         hookedActivityManagerInternal.add(hookClass);
 
-        hookAllMethodsWithCache_Auto(hookClass,"broadcastIntentInPackage",(SimpleExecutor)param -> {
-            showBefore.simpleExecutor.execute(param);
-        },getSystemChecker_PackageNameAt(0));
+        hookAllMethodsWithCache_Auto(hookClass,"broadcastIntentInPackage",(SimpleExecutor)param -> showBefore.simpleExecutor.execute(param),getSystemChecker_PackageNameAt(0));
     }
     public static void hookPendingIntentController(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"onActivityManagerInternalAdded",new SimpleExecutorWithMode(MODE_AFTER, param -> {
@@ -250,9 +248,7 @@ public class HookIActivityManager {
 //    public static void hookBroadcastQueueImpl(Class<?> hookClass){
 //    }
     public static void hookReceiverDispatcher(Class<?> hookClass){
-        hookAllMethodsWithCache_Auto(hookClass,"performReceive",(SimpleExecutor)param -> {
-            LoggerLog(Arrays.toString(param.args));
-        },getSystemChecker_PackageNameAt(9));
+        hookAllMethodsWithCache_Auto(hookClass,"performReceive",(SimpleExecutor)param -> LoggerLog(Arrays.toString(param.args)),getSystemChecker_PackageNameAt(9));
     }
 
     public static void hookActivityManager(Class<ActivityManager> hookClass) {

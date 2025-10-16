@@ -1,29 +1,74 @@
-package com.linearity.datservicereplacement.androidhooking.android.app;
+package com.linearity.datservicereplacement.androidhooking.com.android.server.policy.keyguard;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
+import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
-import static com.linearity.utils.LoggerUtils.LoggerLog;
 
 import android.content.Context;
+
+import com.linearity.utils.NotFinished;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import de.robv.android.xposed.XposedHelpers;
+
+@NotFinished
 public class HookKeyGuard {
 
     public static void doHook() {
-         hookPublishBinderService();
+        hookPublishBinderService();
+        classesAndHooks.put("com.android.internal.policy.KeyguardDismissCallback", HookKeyGuard::hookIKeyguardDismissCallback);
+        classesAndHooks.put("com.android.server.policy.keyguard.KeyguardServiceDelegate$KeyguardShowDelegate",HookKeyGuard::hookIKeyguardDrawnCallback);
+        classesAndHooks.put("com.android.server.policy.keyguard.KeyguardServiceDelegate$KeyguardExitDelegate",HookKeyGuard::hookIKeyguardExitCallback);
+        classesAndHooks.put("com.android.server.policy.keyguard.KeyguardStateMonitor",HookKeyGuard::hookIKeyguardStateCallback);
+        classesAndHooks.put("com.android.server.policy.keyguard.KeyguardServiceWrapper",HookKeyGuard::hookIKeyguardService);
     }
 
     public static void hookPublishBinderService(){
         registerServiceHook_map.put(Context.KEYGUARD_SERVICE,c -> {
             hookIKeyguardService(c);
+            if (XposedHelpers.findFieldIfExists(c,"mBinder") != null){
+                Object stub = XposedHelpers.getObjectField(c,"mBinder");
+                if (stub != null){
+                    hookIKeyguardService(stub.getClass());
+                }
+            }
             return null;
         });
     }
 
 
+
+    public static void hookIKeyguardStateCallback(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"onShowingStateChanged",null);
+        hookAllMethodsWithCache_Auto(hookClass,"onSimSecureStateChanged",null);
+        hookAllMethodsWithCache_Auto(hookClass,"onInputRestrictedStateChanged",null);
+        hookAllMethodsWithCache_Auto(hookClass,"onTrustedChanged",null);
+    }
+
+    public static void hookIKeyguardLockedStateListener(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"onKeyguardLockedStateChanged",null);
+    }
+
+    public static void hookIKeyguardExitCallback(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"onKeyguardExitResult",null);
+    }
+
+    public static void hookIKeyguardDrawnCallback(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"onDrawn",null);
+    }
+
+    public static void hookIKeyguardDismissCallback(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"onDismissError",null);
+        hookAllMethodsWithCache_Auto(hookClass,"onDismissSucceeded",null);
+        hookAllMethodsWithCache_Auto(hookClass,"onDismissCancelled",null);
+    }
+
+    public static void hookIDeviceLockedStateListener(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"onDeviceLockedStateChanged",null);
+    }
     public static final Set<Class<?>> IKeyguardServiceHookedPool = new HashSet<>();
     public static void hookIKeyguardService(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,IKeyguardServiceHookedPool)){return;}

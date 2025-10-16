@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement;
 
+import static com.linearity.datservicereplacement.ReturnIfNonSys.SyntheticNameResolver.resolveMethodName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.nonSysPackages;
@@ -13,6 +14,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.AttributionSource;
 import android.content.ContentProvider;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ParceledListSlice;
 import android.net.ConnectivityManager;
 import android.net.InetAddresses;
 import android.net.LinkAddress;
@@ -37,11 +39,14 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -378,6 +383,7 @@ public class ReturnIfNonSys {
         Array.set(FAKE_USER_INFO_ARR,0,FAKE_USER_INFO);
     }
     public static final ArrayList<Object> EMPTY_ARRAYLIST = new ArrayList<>();
+    public static final ParceledListSlice<?> EMPTY_PARCELED_LIST_SLICE = new ParceledListSlice<>(Collections.emptyList());
     public static final HashMap<Object,Object> EMPTY_HASHMAP = new HashMap<>();
     public static final Class<?> ParceledListSliceClass = XposedHelpers.findClass("android.content.pm.ParceledListSlice",XposedBridge.BOOTCLASSLOADER);
     public static final SimpleExecutor ParceledListSliceGen = param -> param.setResult(XposedHelpers.newInstance(ParceledListSliceClass,new Class[]{List.class},EMPTY_ARRAYLIST));
@@ -553,7 +559,7 @@ public class ReturnIfNonSys {
             }
         }
         for (Method m:hookClass.getDeclaredMethods()){
-            if (!m.getName().equals(methodName)){continue;}
+            if (!resolveMethodName(m.getName()).equals(methodName)){continue;}
 
             XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,objectIfNonSys(object,systemAppChecker));
             unhooks.add(unhook);
@@ -567,12 +573,83 @@ public class ReturnIfNonSys {
     public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
         List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         for (Method m:hookClass.getDeclaredMethods()){
-            if (Objects.equals(m.getName(),methodName)){
+            if (Objects.equals(resolveMethodName(m.getName()),methodName)){
                 XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,simpleExecutorWithoutAttrSource(simpleExecutorWithMode,systemAppChecker));
                 unhooks.add(unhook);
             }
         }
         return unhooks;
+    }
+    public static final class SyntheticNameResolver {
+
+        // === Method name patterns ===
+        private static final Pattern[] METHOD_PATTERNS = new Pattern[]{
+                // -$$Nest$smwriteImage / -$$Nest$mrun
+                Pattern.compile("^-?\\$\\$Nest\\$(?:sm|m)(?<name>\\w+)$"),
+
+                // lambda$doWork$0
+                Pattern.compile("^lambda\\$(?<name>\\w+)\\$\\d+$"),
+
+                // exportImage$suspendImpl / saveFile$default
+                Pattern.compile("^(?<name>\\w+)\\$(?:suspendImpl|default)$"),
+
+                // access$methodName
+                Pattern.compile("^access\\$(?<name>\\w+)$"),
+
+                // Fallback: keep prefix before first '$'
+                Pattern.compile("^(?<name>\\w+)\\$.*$")
+        };
+
+        // === Field name patterns ===
+        private static final Pattern[] FIELD_PATTERNS = new Pattern[]{
+                // -$$Nest$fbitmap / -$$Nest$sfINSTANCE
+                Pattern.compile("^-?\\$\\$Nest\\$(?:sf|f)(?<name>\\w+)$"),
+
+                // access$getField$p
+                Pattern.compile("^access\\$get(?<name>\\w+)\\$p$"),
+
+                // Kotlin backing fields (e.g. _field, field$delegate)
+                Pattern.compile("^(?:_)?(?<name>\\w+?)(?:\\$delegate)?$")
+        };
+
+        // === Class name patterns ===
+        private static final Pattern[] CLASS_PATTERNS = new Pattern[]{
+                // Inner and synthetic lambda classes
+                Pattern.compile("^(?<name>.+)\\$\\$Lambda\\$\\d+$"),
+                Pattern.compile("^(?<name>.+)\\$\\$ExternalSyntheticLambda\\d+$"),
+
+                // Inner / anonymous classes
+                Pattern.compile("^(?<name>.+)\\$\\d+$"),        // e.g. MyClass$1
+                Pattern.compile("^(?<name>.+)\\$.*$"),          // e.g. MyClass$Companion
+        };
+
+        /** Resolve a method name like -$$Nest$smwriteImage → writeImage */
+        public static String resolveMethodName(String name) {
+            return resolveUsing(name, METHOD_PATTERNS);
+        }
+
+        /** Resolve a field name like -$$Nest$fbitmap → bitmap */
+        public static String resolveFieldName(String name) {
+            return resolveUsing(name, FIELD_PATTERNS);
+        }
+
+        /** Resolve a class name like MyClass$$Lambda$1 → MyClass */
+        public static String resolveClassName(String name) {
+            return resolveUsing(name, CLASS_PATTERNS);
+        }
+
+        // === Internal helper ===
+        private static String resolveUsing(String name, Pattern[] patterns) {
+            if (name == null) return null;
+            for (Pattern p : patterns) {
+                Matcher m = p.matcher(name);
+                if (m.find()) {
+                    String real = m.group("name");
+                    if (real != null && !real.isEmpty()) return real;
+                }
+            }
+            return name; // fallback — not synthetic or unknown pattern
+        }
     }
 
     public static <T> T findArgByClassInArgs(Object[] args, Class<T> toFind){

@@ -41,6 +41,8 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.acc
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accounts.HookAccount;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookAMS;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.job.HookJobSchedulerService;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.policy.keyguard.HookKeyGuard;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookIActivityTaskManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.adservices.HookAd;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.alarm.HookAlarm;
@@ -61,7 +63,6 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.dev
 import com.linearity.datservicereplacement.androidhooking.com.android.server.display.HookDisplay;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.healthconnect.HookHealth;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.inputmethod.HookInputMethod;
-import com.linearity.datservicereplacement.androidhooking.android.app.HookKeyGuard;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookGNSS;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.media.projection.HookMediaProjectionManagerService;
@@ -81,6 +82,7 @@ import com.linearity.datservicereplacement.androidhooking.android.app.HookTrust;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wallpaper.HookWallpaper;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wifi.HookWifiService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookWindowManagerService;
+import com.linearity.datservicereplacement.androidhooking.com.android.systemui.statusbar.HookStatusBar;
 import com.linearity.utils.ClassHookExecutor;
 import com.linearity.utils.HookUtils;
 import com.linearity.utils.ServiceHooker;
@@ -523,7 +525,9 @@ public class StartHook implements IXposedHookLoadPackage {
         HookAppOpsService.doHook();
 
         HookWindowManagerService.doHook();
+        HookStatusBar.doHook();
         HookScreenShot.doHook();
+
         HookIActivityManager.doHook();
         HookIActivityTaskManager.doHook();
 
@@ -565,7 +569,10 @@ public class StartHook implements IXposedHookLoadPackage {
         HookHealth.doHook();
         HookBiometric.doHook();
 
+
         HookAd.doHook();
+
+        HookJobSchedulerService.doHook();
 
         Others.doHook();
 //        HookGsmCdmaPhone.doHook();

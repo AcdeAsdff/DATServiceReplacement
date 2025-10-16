@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.wm;
 
+import static android.app.StatusBarManager.NAV_BAR_MODE_DEFAULT;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE;
@@ -9,6 +10,7 @@ import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_LOW_PROFILE;
 import static android.view.WindowInsetsController.APPEARANCE_OPAQUE_STATUS_BARS;
 import static android.view.WindowInsetsController.APPEARANCE_SEMI_TRANSPARENT_STATUS_BARS;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager.isActivityRecordSystem;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager.modifyConfiguration;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
@@ -19,10 +21,10 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showBefore;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isPublicHookedPoolRegistered;
-import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 
+import android.app.StatusBarManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -37,6 +39,7 @@ import android.view.WindowManager;
 import androidx.annotation.Nullable;
 
 import com.linearity.utils.ExtendedRandom;
+import com.linearity.utils.FakeClass.java.util.EmptyArrays;
 import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 import com.linearity.utils.SystemAppChecker;
@@ -58,41 +61,8 @@ public class HookWindowManagerService {
         classesAndHooks.put("com.android.server.wm.WindowState", HookWindowManagerService::hookWindowState);
         classesAndHooks.put("com.android.server.wm.RootWindowContainer", HookWindowManagerService::hookRootWindowContainer);
         classesAndHooks.put("com.android.server.wm.DisplayPolicy", HookWindowManagerService::hookDisplayPolicy);
-        classesAndHooks.put("com.android.server.statusbar.StatusBarManagerService", HookWindowManagerService::hookStatusBarManagerService);
-        classesAndHooks.put("com.android.systemui.statusbar.StatusBarStateControllerImpl", HookWindowManagerService::hookStatusBarStateController);
     }
-    public static void hookStatusBarStateController(Class<?> hookClass){
-//        Set<String> toAvoid = new HashSet<>();
-//        toAvoid.add("setState");
-//        listenClass(hookClass,toAvoid);
-    }
-    public static void hookStatusBarManagerService(Class<?> hookClass){
-//        Set<String> toAvoid = new HashSet<>();
-//        toAvoid.add("getDisableFlags");
-//        toAvoid.add("onDisplayChanged");
-//        toAvoid.add("handleSystemKey");
-//        toAvoid.add("enforceStatusBar");
-//        toAvoid.add("onNotificationVisibilityChanged");
-//        toAvoid.add("-$$Nest$fgetmBar");
-//        toAvoid.add("$r8$lambda$f4g8csS8sA9WBCaVg_JpeSlGvUA");
-//        listenClass(hookClass,toAvoid);
-//        hookAllMethodsWithCache_Auto(hookClass,"disableForUser",)
 
-//        hookAllMethodsWithCache_Auto(hookClass,"getDisableFlags",new SimpleExecutorWithMode(MODE_AFTER,param -> {
-//            LoggerLog(new Exception(param.getResult()
-//                    + "\n" + param.method
-//                    + "\n" + Arrays.deepToString(param.args)
-//                    + "\n" + Binder.getCallingUid()
-//                    + "\n" + getPackageName(Binder.getCallingUid())));
-//        }),noSystemChecker);
-//        hookAllMethodsWithCache_Auto(hookClass,"setDisableFlags",new SimpleExecutorWithMode(MODE_AFTER,param -> {
-//            LoggerLog(new Exception(param.getResult()
-//                    + "\n" + param.method
-//                    + "\n" + Arrays.deepToString(param.args)
-//                    + "\n" + Binder.getCallingUid()
-//                    + "\n" + getPackageName(Binder.getCallingUid())));
-//        }),noSystemChecker);
-    }
     private static final int disableFlags = APPEARANCE_OPAQUE_STATUS_BARS
             | APPEARANCE_SEMI_TRANSPARENT_STATUS_BARS;
     public static void hookDisplayPolicy(Class<?> hookClass) {
