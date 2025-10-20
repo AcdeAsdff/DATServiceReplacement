@@ -1,12 +1,17 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.systemui;
 
+import static android.os.Environment.DIRECTORY_SCREENSHOTS;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.SyntheticNameResolver.resolveMethodName;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.PublicSeed.publicSeed;
+import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -18,12 +23,15 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+import android.provider.MediaStore;
 import android.view.Display;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.NotFinished;
 import com.linearity.utils.SimpleExecutor;
+import com.linearity.utils.SimpleExecutorWithMode;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -168,61 +176,115 @@ public class HookScreenShot {
 //                    ),
 //                    noSystemChecker);
 //        }
-        for (Method m:hookClass.getDeclaredMethods()){
-            if (m.getName().endsWith("writeImage")){
-                XposedBridge.hookMethod(m, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-
-                        try {
-                            Bitmap bitmap = (Bitmap) param.args[1];
-                            int bitmapIndex = 1;
-                            ContentResolver resolver = (ContentResolver) param.args[0];
-                            Bitmap.CompressFormat format = (Bitmap.CompressFormat) param.args[2];
-                            Uri contentUri = (Uri) param.args[4];
-                            int quality = (int) param.args[3];
-                            assert bitmap != null;
-                            assert contentUri != null;
-                            assert format != null;
-                            assert resolver != null;
-                            Bitmap copy = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                            Thread t = new Thread(() -> {
-                                try {
-                                    Bitmap replaceWith = resolveBitmap(copy);
-                                    if (replaceWith == null){
-                                        throw new NullPointerException("resolved bitmap failed");
-                                    }
-                                    param.args[bitmapIndex] = replaceWith;
-                                    LoggerLog(new Exception("resolved bitmap"));
-                                    File file = new File("/sdcard/Pictures/Screenshots/"+UUID.randomUUID()+".png");
-                                    if (!file.exists()){
-                                        file.createNewFile();
-                                    }
-                                    try (OutputStream out = new FileOutputStream(file) ){
-                                        replaceWith.compress(format, quality, out);
-                                        LoggerLog(new Exception("resolved screenshot"));
-                                    }catch (Exception e){
-                                        LoggerLog(e);
-                                    }
-                                    param.args[1] = replaceWith;
-                                    bitmap.recycle();
-                                }catch (Exception e){
-                                    LoggerLog(e);
-                                    param.args[1] = null;
-                                    param.args[4] = null;
-                                }
-                            });
-                            t.start();
-                            t.join();
-                        }catch (Exception e){
-                            LoggerLog(e);
+        hookAllMethodsWithCache_Auto(hookClass,"writeImage",(SimpleExecutor)param -> {
+            try {
+                Bitmap bitmap = (Bitmap) param.args[1];
+                int bitmapIndex = 1;
+                ContentResolver resolver = (ContentResolver) param.args[0];
+                Bitmap.CompressFormat format = (Bitmap.CompressFormat) param.args[2];
+                Uri contentUri = (Uri) param.args[4];
+                int quality = (int) param.args[3];
+                assert bitmap != null;
+                assert contentUri != null;
+                assert format != null;
+                assert resolver != null;
+                Bitmap copy = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                Thread t = new Thread(() -> {
+                    try {
+                        Bitmap replaceWith = resolveBitmap(copy);
+                        if (replaceWith == null){
+                            throw new NullPointerException("resolved bitmap failed");
                         }
+                        param.args[bitmapIndex] = replaceWith;
+//                        LoggerLog(new Exception("resolved bitmap"));
+//                        File file = new File("/sdcard/Pictures/Screenshots/"+UUID.randomUUID()+".png");
+//                        if (!file.exists()){
+//                            file.createNewFile();
+//                        }
+//                        try (OutputStream out = new FileOutputStream(file) ){
+//                            replaceWith.compress(format, quality, out);
+//                            LoggerLog(new Exception("resolved screenshot"));
+//                        }catch (Exception e){
+//                            LoggerLog(e);
+//                        }
+//                        param.args[1] = replaceWith;
+                        bitmap.recycle();
+                    }catch (Exception e){
+                        LoggerLog(e);
+                        param.args[1] = null;
+                        param.args[4] = null;
                     }
                 });
-//                LoggerLog(new Exception("got method:" + m));
+                t.start();
+                t.join();
+            }catch (Exception e){
+                LoggerLog(e);
             }
-        }
+        },noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"createMetadata",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+            ContentValues values = (ContentValues) param.getResult();
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                    values.getAsString(MediaStore.MediaColumns.RELATIVE_PATH).replace(DIRECTORY_SCREENSHOTS,SCREENSHOT_PATH_REPLACE_STRING)
+            );
+        }),noSystemChecker);
+//        for (Method m:hookClass.getDeclaredMethods()){
+//            if (m.getName().endsWith("writeImage")){
+//                XposedBridge.hookMethod(m, new XC_MethodHook() {
+//                    @Override
+//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                        super.beforeHookedMethod(param);
+//
+//                        try {
+//                            Bitmap bitmap = (Bitmap) param.args[1];
+//                            int bitmapIndex = 1;
+//                            ContentResolver resolver = (ContentResolver) param.args[0];
+//                            Bitmap.CompressFormat format = (Bitmap.CompressFormat) param.args[2];
+//                            Uri contentUri = (Uri) param.args[4];
+//                            int quality = (int) param.args[3];
+//                            assert bitmap != null;
+//                            assert contentUri != null;
+//                            assert format != null;
+//                            assert resolver != null;
+//                            Bitmap copy = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+//                            Thread t = new Thread(() -> {
+//                                try {
+//                                    Bitmap replaceWith = resolveBitmap(copy);
+//                                    if (replaceWith == null){
+//                                        throw new NullPointerException("resolved bitmap failed");
+//                                    }
+//                                    param.args[bitmapIndex] = replaceWith;
+//                                    LoggerLog(new Exception("resolved bitmap"));
+//                                    File file = new File("/sdcard/Pictures/Screenshots/"+UUID.randomUUID()+".png");
+//                                    if (!file.exists()){
+//                                        file.createNewFile();
+//                                    }
+//                                    try (OutputStream out = new FileOutputStream(file) ){
+//                                        replaceWith.compress(format, quality, out);
+//                                        LoggerLog(new Exception("resolved screenshot"));
+//                                    }catch (Exception e){
+//                                        LoggerLog(e);
+//                                    }
+//                                    param.args[1] = replaceWith;
+//                                    bitmap.recycle();
+//                                }catch (Exception e){
+//                                    LoggerLog(e);
+//                                    param.args[1] = null;
+//                                    param.args[4] = null;
+//                                }
+//                            });
+//                            t.start();
+//                            t.join();
+//                        }catch (Exception e){
+//                            LoggerLog(e);
+//                        }
+//                    }
+//                });
+////                LoggerLog(new Exception("got method:" + m));
+//            }else if (resolveMethodName(m.getName()).equals("createMetadata")){
+//
+//            }
+//        }
+
     }
     private static final int ERASE_DIGITS = 2;
     private static final float DELTA_THRESHOLD = 2f;
@@ -711,4 +773,11 @@ void main() {
         }
     }
 
+    private static final String SCREENSHOT_PATH_REPLACE_STRING;
+    static {
+        ExtendedRandom random = new ExtendedRandom(publicSeed).nextExtendedRandom();
+        random.nextString(20);
+        random = random.nextExtendedRandom();
+        SCREENSHOT_PATH_REPLACE_STRING = random.nextRandomHexUpper(15);
+    }
 }

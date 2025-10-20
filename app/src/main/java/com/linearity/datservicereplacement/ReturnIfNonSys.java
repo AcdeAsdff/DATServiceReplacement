@@ -10,6 +10,8 @@ import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_INT_ARRA
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.*;
 
+import static java.lang.System.identityHashCode;
+
 import android.bluetooth.BluetoothAdapter;
 import android.content.AttributionSource;
 import android.content.ContentProvider;
@@ -21,8 +23,10 @@ import android.net.LinkAddress;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.WorkSource;
 import android.telephony.TelephonyManager;
+import android.util.ArrayMap;
 import android.util.Pair;
 import android.util.SparseArray;
 
@@ -41,12 +45,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -205,7 +214,11 @@ public class ReturnIfNonSys {
                         if (systemAppChecker.checkSystemApp(param)){
                             return;
                         }
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 };
             case MODE_AFTER:
@@ -214,7 +227,11 @@ public class ReturnIfNonSys {
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         if (systemAppChecker.checkSystemApp(param)){return;}
                         super.afterHookedMethod(param);
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 };
             case MODE_BEFORE_AND_AFTER:
@@ -223,14 +240,22 @@ public class ReturnIfNonSys {
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
                         if (systemAppChecker.checkSystemApp(param)){return;}
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         super.afterHookedMethod(param);
                         if (systemAppChecker.checkSystemApp(param)){return;}//fixed clipboard not working
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 };
             case MODE_BEFORE_NO_CHECK:
@@ -239,7 +264,11 @@ public class ReturnIfNonSys {
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
 //                        if (isSystemApp(Binder.getCallingUid())){return;}
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 };
             case MODE_AFTER_NO_CHECK:
@@ -248,7 +277,11 @@ public class ReturnIfNonSys {
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
 //                        if (isSystemApp(Binder.getCallingUid())){return;}
                         super.afterHookedMethod(param);
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 };
             case MODE_BEFORE_AND_AFTER_NO_CHECK:
@@ -257,14 +290,22 @@ public class ReturnIfNonSys {
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
 //                        if (isSystemApp(Binder.getCallingUid())){return;}
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                         super.afterHookedMethod(param);
                         if (isSystemApp(Binder.getCallingUid())){return;}//fixed clipboard not working
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 };
             default:
@@ -273,7 +314,11 @@ public class ReturnIfNonSys {
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         super.beforeHookedMethod(param);
                         if (systemAppChecker.checkSystemApp(param)){return;}//fixed clipboard not working
-                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                        try {
+                            simpleExecutorWithMode.simpleExecutor.execute(param);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 };
         }
@@ -382,7 +427,9 @@ public class ReturnIfNonSys {
     static {
         Array.set(FAKE_USER_INFO_ARR,0,FAKE_USER_INFO);
     }
+    public static final Bundle EMPTY_BUNDLE = new Bundle();
     public static final ArrayList<Object> EMPTY_ARRAYLIST = new ArrayList<>();
+    public static final ArrayMap<Object,Object> EMPTY_ARRAYMAP = new ArrayMap<>();
     public static final ParceledListSlice<?> EMPTY_PARCELED_LIST_SLICE = new ParceledListSlice<>(Collections.emptyList());
     public static final HashMap<Object,Object> EMPTY_HASHMAP = new HashMap<>();
     public static final Class<?> ParceledListSliceClass = XposedHelpers.findClass("android.content.pm.ParceledListSlice",XposedBridge.BOOTCLASSLOADER);
@@ -498,6 +545,38 @@ public class ReturnIfNonSys {
         return hookAllMethodsWithCache_Auto(hookClass,methodName,object,defaultSystemChecker);
     }
 
+    @ParametersAreNonnullByDefault
+    record HookRecord(int hookClassIdentityHash,String methodName,int objectIdentityHash,int sysAppCheckerIdentityHash){
+        HookRecord(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+            this(identityHashCode(hookClass),methodName,identityHashCode(object),identityHashCode(systemAppChecker));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof HookRecord that)) return false;
+            return objectIdentityHash == that.objectIdentityHash
+                    && hookClassIdentityHash == that.hookClassIdentityHash
+                    && sysAppCheckerIdentityHash == that.sysAppCheckerIdentityHash
+                    && Objects.equals(methodName, that.methodName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(hookClassIdentityHash, methodName, objectIdentityHash, sysAppCheckerIdentityHash);
+        }
+    }
+
+    private static final Set<HookRecord> HOOKED_SET = ConcurrentHashMap.newKeySet();
+    private static boolean checkHooked(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+        HookRecord key = new HookRecord(hookClass,methodName,object,systemAppChecker);
+        if (HOOKED_SET.contains(key)){
+            return true;
+        }
+        HOOKED_SET.add(key);
+        return false;
+    }
+
     /**
      * usually,we hook a method in two steps:
      * <p>check the caller,if it's system or whitelisted,pass.</p>
@@ -514,6 +593,7 @@ public class ReturnIfNonSys {
      * @return unhooks for hooked methods
      */
     public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_Auto(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+
         List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         //ReturnObjIfNonSys executes XC_MethodHook,don't worry
 //        assert !(object instanceof XC_MethodHook);
@@ -545,6 +625,10 @@ public class ReturnIfNonSys {
         return hookAllMethodsWithCache_ReturnObjIfNonSys(hookClass,methodName,object,defaultSystemChecker);
     }
     public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_ReturnObjIfNonSys(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
+
+        if (checkHooked(hookClass,methodName,object,systemAppChecker)){
+            return Collections.emptyList();
+        }
         List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         if (object != null){
             if (object instanceof XC_MethodHook){
@@ -571,6 +655,10 @@ public class ReturnIfNonSys {
         return hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,simpleExecutorWithMode,defaultSystemChecker);
     }
     public static List<XC_MethodHook.Unhook> hookAllMethodsWithCache_executeIfNonSys(Class<?> hookClass, String methodName, SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
+
+        if (checkHooked(hookClass,methodName,simpleExecutorWithMode,systemAppChecker)){
+            return Collections.emptyList();
+        }
         List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         for (Method m:hookClass.getDeclaredMethods()){
             if (Objects.equals(resolveMethodName(m.getName()),methodName)){
@@ -636,6 +724,37 @@ public class ReturnIfNonSys {
         /** Resolve a class name like MyClass$$Lambda$1 → MyClass */
         public static String resolveClassName(String name) {
             return resolveUsing(name, CLASS_PATTERNS);
+        }
+        public static String fullResolvedClassName(Class<?> clazz) {
+            if (clazz == null) return null;
+
+            // Get package name (may be empty for default package)
+            String packageName = clazz.getPackage() != null ? clazz.getPackage().getName() : "";
+
+            // Resolve synthetic/inner class name
+            String resolvedName = SyntheticNameResolver.resolveClassName(clazz.getSimpleName());
+
+            // Combine
+            return packageName.isEmpty() ? resolvedName : packageName + "." + resolvedName;
+        }
+        public static String fullBaseClassName(Class<?> clazz) {
+            if (clazz == null) return null;
+
+            // Get package name
+            String packageName = clazz.getPackage() != null ? clazz.getPackage().getName() : "";
+
+            // Start with the simple name
+            String name = clazz.getSimpleName();
+
+            // Recursively resolve synthetic/inner parts
+            String previous;
+            do {
+                previous = name;
+                name = SyntheticNameResolver.resolveClassName(name);
+            } while (!name.equals(previous)); // repeat until no change
+
+            // Combine package + resolved name
+            return packageName.isEmpty() ? name : packageName + "." + name;
         }
 
         // === Internal helper ===

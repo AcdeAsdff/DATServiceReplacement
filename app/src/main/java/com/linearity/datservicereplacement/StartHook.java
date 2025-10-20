@@ -3,6 +3,8 @@ package com.linearity.datservicereplacement;
 import static com.linearity.datservicereplacement.LibNames.DATZYGISK_LOCAL_PART;
 import static com.linearity.datservicereplacement.LoadLibraryUtil.libExists;
 import static com.linearity.datservicereplacement.LoadLibraryUtil.loadLibraryByPath;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.SyntheticNameResolver.fullResolvedClassName;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.SyntheticNameResolver.resolveClassName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.initCellTowers;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.initLocations;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
@@ -41,7 +43,9 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.acc
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accounts.HookAccount;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookAMS;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.content.HookContentService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.job.HookJobSchedulerService;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.hookPackageManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.policy.keyguard.HookKeyGuard;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookIActivityTaskManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.adservices.HookAd;
@@ -72,6 +76,7 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.
 import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.permission.HookPermissionManagerService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.powerstats.HookIPowerStatsService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.power.HookPowerManager;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookTaskRelated;
 import com.linearity.datservicereplacement.androidhooking.com.android.systemui.HookScreenShot;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.search.HookSearch;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.HookSensorPrivacyManager;
@@ -82,6 +87,7 @@ import com.linearity.datservicereplacement.androidhooking.android.app.HookTrust;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wallpaper.HookWallpaper;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wifi.HookWifiService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookWindowManagerService;
+import com.linearity.datservicereplacement.androidhooking.com.android.systemui.HookSystemUIApplication;
 import com.linearity.datservicereplacement.androidhooking.com.android.systemui.statusbar.HookStatusBar;
 import com.linearity.utils.ClassHookExecutor;
 import com.linearity.utils.HookUtils;
@@ -503,6 +509,7 @@ public class StartHook implements IXposedHookLoadPackage {
 
         HookAMS.doHook();
         HookIPackageManager.doHook();
+        hookPackageManager.doHook();
         HookAppFilter.doHook();
 
         HookInputMethod.doHook();
@@ -528,6 +535,8 @@ public class StartHook implements IXposedHookLoadPackage {
         HookWindowManagerService.doHook();
         HookStatusBar.doHook();
         HookScreenShot.doHook();
+        HookSystemUIApplication.doHook();
+        HookContentService.doHook();
 
         HookIActivityManager.doHook();
         HookIActivityTaskManager.doHook();
@@ -547,6 +556,8 @@ public class StartHook implements IXposedHookLoadPackage {
         HookNFC.doHook();
 
         HookTelecomService.doHook();
+
+        HookTaskRelated.doHook();
 //        HookTelephony.doHook();//causes endless reboot TODO:Find out why
 //        HookTelephonyProvider.doHook();//I didn't even implement it.//TODO: implement
 
@@ -613,6 +624,27 @@ public class StartHook implements IXposedHookLoadPackage {
     static {
         hookedClassLoaderPool.add(XposedBridge.BOOTCLASSLOADER.getClass());
     }
+
+
+    private static void executeWithClassName(String className,Class<?> hookClass,ClassLoader classLoader){
+        if (classesAndHooks.containsKey(className)){
+            for (ClassHookExecutor executor:classesAndHooks.get(className)){
+                Pair<String,ClassHookExecutor> executorKey = new Pair<>(className,executor);
+                {
+                    if (usedExecutors.get(classLoader).contains(executorKey)) {
+                        continue;
+                    }
+                    usedExecutors.put(classLoader, executorKey);
+                }//check if  hooked
+                try {
+                    executor.startHookClass(hookClass);
+                }catch (Exception e){
+                    LoggerLog(e);
+                }
+            }
+        }
+    }
+
     //all classLoaders are belong to me
     public static void listenClassLoader(){
         SimpleExecutorWithMode resultClass = new SimpleExecutorWithMode(MODE_AFTER, param -> {
@@ -620,21 +652,12 @@ public class StartHook implements IXposedHookLoadPackage {
             hookForClassLoader(classLoader);
             Class<?> result = (Class<?>) param.getResult();
             if (result != null){
-                String className = result.getName();
-                if (classesAndHooks.containsKey(result.getName())){
-                    for (ClassHookExecutor executor:classesAndHooks.get(className)){
-                        Pair<String,ClassHookExecutor> executorKey = new Pair<>(className,executor);
-                        if (usedExecutors.get(classLoader).contains(executorKey)){
-                            continue;
-                        }
-                        usedExecutors.put(classLoader,executorKey);
-                        try {
-                            executor.startHookClass(result);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
-                    }
-                }
+
+                String classNameResolved = fullResolvedClassName(result);
+                String classNameNotResolved = result.getName();
+
+                executeWithClassName(classNameResolved,result,classLoader);
+                executeWithClassName(classNameNotResolved,result,classLoader);
             }
         });
         SimpleExecutorWithMode resultNotUsed = new SimpleExecutorWithMode(MODE_AFTER, param -> {

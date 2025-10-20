@@ -10,7 +10,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -22,14 +25,17 @@ public class HookAMS {
         classesAndHooks.put("com.android.server.am.ActivityManagerService",HookAMS::hookSystemReady);
     }
 
-    private static final List<XC_MethodHook.Unhook> toUnregister = new ArrayList<>();
+    private static final Queue<XC_MethodHook.Unhook> toUnregister = new ConcurrentLinkedQueue<>();
     public static void unregister(){
-        try {
-            for (XC_MethodHook.Unhook unhook:toUnregister){
-                unhook.unhook();
+        while (!toUnregister.isEmpty()) {
+            try {
+                XC_MethodHook.Unhook unhook = toUnregister.poll();
+                if (unhook != null){
+                    unhook.unhook();
+                }
+            } catch (ConcurrentModificationException c) {
+                unregister();//again!
             }
-        }catch (ConcurrentModificationException c){
-            unregister();//again!
         }
     }
     public static void hookSystemReady(Class<?> hookClass){

@@ -1,9 +1,19 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.pm;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
 import static com.linearity.datservicereplacement.StartHook.IPackageManagers;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.hookPackageManager.isSystemApplicationInfo;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
+
+import android.content.pm.ApplicationInfo;
+import android.content.pm.ParceledListSlice;
+
+import com.linearity.utils.SimpleExecutorWithMode;
+
+import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -61,7 +71,20 @@ public class HookIPackageManager {
 ////    hookAllMethodsWithCache_Auto(hookClass,"queryIntentServices",List);
 ////    hookAllMethodsWithCache_Auto(hookClass,"getInstalledPackages",ParceledListSlice);
 ////    hookAllMethodsWithCache_Auto(hookClass,"getInstalledApplications",ParceledListSlice);
-////    hookAllMethodsWithCache_Auto(hookClass,"getPersistentApplications",List);
+        hookAllMethodsWithCache_Auto(hookClass,"getPersistentApplications",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+            Object result = param.getResult();
+            List<ApplicationInfo> toIdentify = null;
+            try {
+                if (result instanceof ParceledListSlice<?> slice){
+                    toIdentify = (List<ApplicationInfo>) slice.getList();
+                }else {
+                    toIdentify = (List<ApplicationInfo>) result;
+                }
+                toIdentify.removeIf(appInfo -> !isSystemApplicationInfo(appInfo));
+            }catch (Exception e){
+                LoggerLog(e);
+            }
+        }),noSystemChecker);
 ////    hookAllMethodsWithCache_Auto(hookClass,"resolveContentProvider",ProviderInfo);
 //        hookAllMethodsWithCache_Auto(hookClass,"querySyncProviders",null);
 ////    hookAllMethodsWithCache_Auto(hookClass,"queryContentProviders",List);

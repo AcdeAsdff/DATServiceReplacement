@@ -11,6 +11,7 @@ import android.app.AndroidAppHelper;
 import android.app.Application;
 import android.content.AttributionSource;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Binder;
@@ -44,6 +45,7 @@ public class PackageManagerUtils {
     public static int UserHandle_SYSTEM = XposedHelpers.getStaticIntField(UserHandle.class,"USER_SYSTEM");
 
     public static boolean isSystemApp(int callingUID){
+
         if (callingUID%100000 < 10000){return true;}
         if (sysPackages.containsKey(callingUID)){
             return true;
@@ -452,10 +454,35 @@ public class PackageManagerUtils {
         return true;
     }
 
-
     public static boolean isSystemApp(AttributionSource source){
 //        LoggerLog(source);
         return isSystemApp_preventStackOverflow(source,new HashSet<>());
+    }
+
+    public static boolean isSystemTask(Object taskObj) {
+        try {
+            ApplicationInfo appInfo = (ApplicationInfo) XposedHelpers.getObjectField(taskObj, "applicationInfo");
+            if (appInfo != null) {
+                return isSystemApplicationInfo(appInfo);
+            }
+
+            int uid = XposedHelpers.getIntField(taskObj, "effectiveUid");
+            return isSystemApp(uid);
+
+//            Object actInfo = XposedHelpers.getObjectField(taskObj, "mActivityInfo");
+//            if (actInfo != null) {
+//                if (isSystemApplicationInfo())
+//            }
+
+
+            // 3️⃣ Check flags
+//            int flags = appInfo.flags;
+//            return ( (flags & ApplicationInfo.FLAG_SYSTEM) != 0
+//                    || (flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0 );
+        } catch (Exception e) {
+            LoggerLog(e);
+            return true;
+        }
     }
     public static boolean isSystemApp_preventStackOverflow(AttributionSource source, Set<AttributionSource> checked){
         if (checked.contains(source)){

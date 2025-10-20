@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.pm;
 
+import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
@@ -45,6 +46,8 @@ public class hookPackageManager {
     private static final Set<Class<?>> hooked = new HashSet<>();
     public static final Map<String,PackageInfo> nonSysPackagesByName = new ConcurrentHashMap<>();
     public static final Map<String,PackageInfo> sysPackagesByName = new ConcurrentHashMap<>();
+    public static void doHook(){
+    }
     public static void hookGetPackageInfo(Class<?> /*android.content.pm.IPackageManager*/ packageService) {
         if (hooked.contains(packageService)){return;}
         hooked.add(packageService);
@@ -243,6 +246,9 @@ public class hookPackageManager {
         return ret;
     }
     public static boolean isSystemApplicationInfo(ApplicationInfo applicationInfo){
+        if (WHITELIST_PACKAGE_NAMES.contains(applicationInfo.packageName)){
+            return true;
+        }
         return applicationInfo.isSystemApp();
     }
 
@@ -388,6 +394,7 @@ public class hookPackageManager {
 
         return toConfuse;
     }
+
 
 
 }

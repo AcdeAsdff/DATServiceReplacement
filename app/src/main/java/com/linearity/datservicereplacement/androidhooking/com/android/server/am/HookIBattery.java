@@ -1,19 +1,32 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.am;
 
+import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYLIST;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYMAP;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.utils.ExtendedRandom.SYSTEM_INSTANCE;
 import static com.linearity.utils.HookUtils.listenClass;
+import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 
 import android.os.Binder;
+import android.os.Parcel;
+import android.os.RemoteException;
+import android.os.health.HealthKeys;
+import android.os.health.HealthStats;
+import android.os.health.HealthStatsParceler;
+import android.os.health.HealthStatsWriter;
+import android.os.health.TimerStat;
 import android.util.ArrayMap;
 
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.NotFinished;
+import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -107,7 +120,7 @@ public class HookIBattery {
         hookAllMethodsWithCache_Auto(hookClass,"noteResetCamera",null);
         hookAllMethodsWithCache_Auto(hookClass,"noteResetFlashlight",null);
         hookAllMethodsWithCache_Auto(hookClass,"noteWakeupSensorEvent",null);
-        hookAllMethodsWithCache_Auto(hookClass,"getBatteryUsageStats", new ArrayList<>());
+        hookAllMethodsWithCache_Auto(hookClass,"getBatteryUsageStats", EMPTY_ARRAYLIST);
         hookAllMethodsWithCache_Auto(hookClass,"isCharging",true);
         hookAllMethodsWithCache_Auto(hookClass,"computeBatteryTimeRemaining",0L);
         hookAllMethodsWithCache_Auto(hookClass,"computeChargeTimeRemaining",0L);
@@ -178,10 +191,36 @@ public class HookIBattery {
         hookAllMethodsWithCache_Auto(hookClass,"getCellularBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param-> param.setResult(generateFakeCellularBatteryStats(Binder.getCallingUid()))));
         hookAllMethodsWithCache_Auto(hookClass,"getWifiBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param-> param.setResult(generateFakeWifiBatteryStats(Binder.getCallingUid()))));
         hookAllMethodsWithCache_Auto(hookClass,"getGpsBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param-> param.setResult(generateFakeGpsBatteryStats(Binder.getCallingUid()))));
-        hookAllMethodsWithCache_Auto(hookClass,"getWakeLockStats",new ArrayMap<>());//android 32
+        hookAllMethodsWithCache_Auto(hookClass,"getWakeLockStats",EMPTY_ARRAYMAP);//android 32
         hookAllMethodsWithCache_Auto(hookClass,"getBluetoothBatteryStats",null);//BluetoothBatteryStats
-        hookAllMethodsWithCache_Auto(hookClass,"takeUidSnapshot",null);//HealthStatsParceler
-        hookAllMethodsWithCache_Auto(hookClass,"takeUidSnapshots",null);//HealthStatsParceler
+        SimpleExecutor resultHealthStatsParceler = param -> {//TODO:Generate instead of throw
+            RemoteException throwBack = new RemoteException();
+            List<StackTraceElement> elements = new ArrayList<>(throwBack.getStackTrace().length);
+            Arrays.stream(throwBack.getStackTrace()).forEach(
+                    element -> {
+                        String elementString = element.toString().toLowerCase();
+                        if (elementString.contains("lineage")
+                                || elementString.contains("xposed")
+                                || elementString.contains("lsphooker_")
+                                || elementString.contains("j.callback")
+                                || elementString.contains("lsposed")
+                                || elementString.contains("linearity")){
+                             return;
+                        }
+                        elements.add(element);
+                    }
+            );
+            throwBack.setStackTrace(elements.toArray(new StackTraceElement[0]));
+            param.setThrowable(throwBack);
+//            HealthStatsWriter writer = new HealthStatsWriter(new HealthKeys.Constants() );
+//            try {
+//                param.setResult(new HealthStatsParceler(parcel));
+//            }catch (Exception e){
+//                LoggerLog(e);
+//            }
+        };
+        hookAllMethodsWithCache_Auto(hookClass,"takeUidSnapshot",resultHealthStatsParceler);//HealthStatsParceler
+        hookAllMethodsWithCache_Auto(hookClass,"takeUidSnapshots",resultHealthStatsParceler);//HealthStatsParceler
         hookAllMethodsWithCache_Auto(hookClass,"noteBluetoothControllerActivity",null);
         hookAllMethodsWithCache_Auto(hookClass,"noteModemControllerActivity",null);
         hookAllMethodsWithCache_Auto(hookClass,"noteWifiControllerActivity",null);

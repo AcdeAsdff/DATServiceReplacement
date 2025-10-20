@@ -31,6 +31,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.os.Binder;
+import android.os.UserHandle;
 import android.util.Base64;
 import android.util.Pair;
 import android.view.InsetsFrameProvider;
@@ -47,9 +48,12 @@ import com.linearity.utils.SystemAppChecker;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class HookWindowManagerService {
@@ -61,6 +65,11 @@ public class HookWindowManagerService {
         classesAndHooks.put("com.android.server.wm.WindowState", HookWindowManagerService::hookWindowState);
         classesAndHooks.put("com.android.server.wm.RootWindowContainer", HookWindowManagerService::hookRootWindowContainer);
         classesAndHooks.put("com.android.server.wm.DisplayPolicy", HookWindowManagerService::hookDisplayPolicy);
+        classesAndHooks.put("android.window.ScreenCapture$ScreenshotHardwareBuffer",HookWindowManagerService::hookScreenshotHardwareBuffer);
+        classesAndHooks.put("android.view.SurfaceControl$ScreenshotHardwareBuffer",HookWindowManagerService::hookScreenshotHardwareBuffer);
+    }
+    public static void hookScreenshotHardwareBuffer(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"containsSecureLayers",false,noSystemChecker);
     }
 
     private static final int disableFlags = APPEARANCE_OPAQUE_STATUS_BARS
@@ -442,14 +451,16 @@ public class HookWindowManagerService {
 //                param.setResult(true);
 //            }
 //        },noSystemChecker);
-
-        hookAllMethodsWithCache_Auto(hookClass,"isVisible",(SimpleExecutor)param -> {
-            if (checkStatusBarWindowState(param.thisObject)){
+        SimpleExecutor forIsVisible = param -> {
+            if (decideWindowStateInvisible(param.thisObject)){
                 param.setResult(false);
             }
-        },noSystemChecker);
+        };
+        hookAllMethodsWithCache_Auto(hookClass,"isVisibleRequested",forIsVisible,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"isVisible",forIsVisible,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"isVisibleNow",forIsVisible,noSystemChecker);
 
-//        hookAllMethodsWithCache_Auto(hookClass,"isSecureLocked",false,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"isSecureLocked",false,noSystemChecker);
 //        hookAllMethodsWithCache_Auto(hookClass,"getDisableFlags",(SimpleExecutor)param -> checkAndModifyStatusBarWindowState(param.thisObject),noSystemChecker);
 
 //        SimpleExecutorWithMode executor = new SimpleExecutorWithMode(MODE_AFTER,param -> {
@@ -498,11 +509,65 @@ public class HookWindowManagerService {
 
 
     }
+
     private static Method WindowState_getWindowTag = null;
+    private static Field WindowState_f_mOwnerUid = null;
     public static void checkAndModifyStatusBarWindowState(@Nullable Object probablyStatusBarState) {
         if (checkStatusBarWindowState(probablyStatusBarState)){
             modifyStatusBarWindowState(probablyStatusBarState);
         }
+    }
+
+    private static Set<String> windowNamesToInvisible = new HashSet<>(Arrays.asList("StatusBar"));
+    private static Set<String> windowNamesNotToShow = new HashSet<>(Arrays.asList(
+            new String[]{"InputMethod",
+                    "com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher",
+                    "ShellDropTarget",
+                    "NotificationShade",
+                    "NavigationBar0",
+                    "EdgeBackGestureHandler0",
+                    "ScreenDecorOverlay",
+                    "SecondaryHomeHandle0",
+                    "ScreenDecorOverlayBottom",
+                    "com.android.settings/com.android.settings.FallbackHome",
+                    "com.android.systemui.wallpapers.ImageWallpaper",
+                    "ActionsDialog",
+            }
+    ));
+    public static boolean decideWindowStateInvisible(@Nullable Object windowState){
+        if (windowState == null){return false;}
+
+        try {
+            if (WindowState_getWindowTag == null){
+                WindowState_getWindowTag = XposedHelpers.findMethodExact(windowState.getClass(),"getWindowTag");
+            }
+            if (WindowState_f_mOwnerUid == null){
+                WindowState_f_mOwnerUid = XposedHelpers.findField(windowState.getClass(),"mOwnerUid");
+            }
+            String name = ""+WindowState_getWindowTag.invoke(windowState);
+            try {
+
+                if (windowNamesToInvisible.contains(name)){
+                    return true;
+                }else if (name.toLowerCase().contains("statusbar")){
+                    int mOwnerUid = WindowState_f_mOwnerUid.getInt(windowState);
+                    if (isSystemApp(mOwnerUid)){
+                        LoggerLog(windowState + " " + mOwnerUid +" " + name);
+                    }
+                }
+//                else if (!windowNamesNotToShow.contains(name)){
+//                    int mOwnerUid = WindowState_f_mOwnerUid.getInt(windowState);
+//                    if (isSystemApp(mOwnerUid)){
+//                        LoggerLog(windowState + " " + mOwnerUid +" " + name);
+//                    }
+//                }
+            }catch (Exception e){
+                LoggerLog(e);
+            }
+        }catch (Exception e){
+            LoggerLog(e);
+        }
+        return false;
     }
     public static boolean checkStatusBarWindowState(@Nullable Object probablyStatusBarState){
         try {

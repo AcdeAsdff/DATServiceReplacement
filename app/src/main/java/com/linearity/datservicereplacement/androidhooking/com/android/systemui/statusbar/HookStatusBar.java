@@ -1,13 +1,24 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.systemui.statusbar;
 
 import static android.app.StatusBarManager.NAV_BAR_MODE_DEFAULT;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.findArgByClassInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.utils.HookUtils.listenClass;
+import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
+
+import android.view.View;
 
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookWindowManagerService;
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
 import com.linearity.utils.NotFinished;
+import com.linearity.utils.SimpleExecutor;
+import com.linearity.utils.SimpleExecutorWithMode;
+
+import de.robv.android.xposed.XposedHelpers;
 
 @NotFinished
 public class HookStatusBar {
@@ -17,12 +28,46 @@ public class HookStatusBar {
         classesAndHooks.put("com.android.server.notification.NotificationManagerService$StatusBarNotificationHolder",HookStatusBar::hookIStatusBarNotificationHolder);
 //        classesAndHooks.put("com.android.systemui.statusbar.StatusBarStateControllerImpl", HookStatusBar::hookStatusBarStateController);
         classesAndHooks.put("android.app.StatusBarManager$UndoCallback",HookStatusBar::hookIUndoMediaTransferCallback);
+        classesAndHooks.put("com.android.systemui.statusbar.window.StatusBarWindowController",HookStatusBar::hookStatusBarWindowController);
+
 
     }
     public static void hookStatusBarStateController(Class<?> hookClass){
 //        Set<String> toAvoid = new HashSet<>();
 //        toAvoid.add("setState");
 //        listenClass(hookClass,toAvoid);
+    }
+    public static void hookStatusBarWindowController(Class<?> hookClass){
+        hookAllMethodsWithCache_Auto(hookClass,"setForceStatusBarVisible",false,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"setOngoingProcessRequiresStatusBarVisible",false,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"setLaunchAnimationRunning",false,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"getBackgroundView",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+            View v = (View) param.getResult();
+            if (v != null){
+                v.setVisibility(View.INVISIBLE);
+            }
+        }),noSystemChecker);
+        SimpleExecutor invisibleViewInArgs = param -> {
+            for (Object o:param.args){
+                if (o instanceof View v){
+                    v.setVisibility(View.INVISIBLE);
+                }
+            }
+        };
+        hookAllMethodsWithCache_Auto(hookClass,"addViewToWindow",invisibleViewInArgs,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"<init>",invisibleViewInArgs,noSystemChecker);
+        LoggerLog("listening class:" + hookClass);
+        listenClass(hookClass);
+        Class<?> statusBarWindowViewClass = XposedHelpers.findClassIfExists("com.android.systemui.statusbar.window.StatusBarWindowView",hookClass.getClassLoader());
+        if (statusBarWindowViewClass != null){
+            LoggerLog("listening class:" + statusBarWindowViewClass);
+            listenClass(statusBarWindowViewClass);
+        }
+        Class<?> statusBarWindowStateControllerClass = XposedHelpers.findClassIfExists("com.android.systemui.statusbar.window.StatusBarWindowStateController",hookClass.getClassLoader());
+        if (statusBarWindowStateControllerClass != null){
+            LoggerLog("listening class:" + statusBarWindowStateControllerClass);
+            listenClass(statusBarWindowStateControllerClass);
+        }
     }
     public static void hookIStatusBarNotificationHolder(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"get",null);//StatusBarNotification

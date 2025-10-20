@@ -285,7 +285,7 @@ public class ExpectInfo {
         constMap.put("accessibility_enabled","0");
     }
     public ExpectInfo(ExtendedRandom random){
-        kvMap.put("screen_brightness", random.nextInt(100));
+        kvMap.put("screen_brightness", String.valueOf(random.nextInt(100)));
         kvMap.put("time_12_24", random.nextBoolean()?"24":"12");
         kvMap.put("haptic_feedback_enabled", random.next0or1());
         kvMap.put("sound_effects_enabled", random.next0or1());
@@ -385,6 +385,11 @@ public class ExpectInfo {
         kvMap.put("auto_time",random.next0or1());
         kvMap.put("dark_mode_enable",random.next0or1());
         kvMap.put("next_alarm_formatted",random.next0or1());
+        kvMap.put("wifi_scan_always_enabled",random.nextBoolean());
+        kvMap.put("enabled_input_methods",random.nextBoolean());
+        kvMap.put("ui_night_mode",random.nextBoolean());
+        kvMap.put("auto_test_mode_on",false);
+        kvMap.put("accountNickname",random.nextString(random.nextInt(8)+5));
 
     }
     
