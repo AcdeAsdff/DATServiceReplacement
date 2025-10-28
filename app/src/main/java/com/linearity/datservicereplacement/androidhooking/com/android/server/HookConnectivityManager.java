@@ -3,26 +3,38 @@ package com.linearity.datservicereplacement.androidhooking.com.android.server;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYLIST;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
+import static com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils.FAKE_NETWORK_INFO_ARR;
+import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_NETWORK_INFO_ARRAY;
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_NETWORK_STATE_ARRAY;
+import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
+import androidx.annotation.NonNull;
 
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
 import com.linearity.utils.NotFinished;
+import com.linearity.utils.SimpleExecutorWithMode;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 
 @NotFinished
 public class HookConnectivityManager {
@@ -75,6 +87,29 @@ public class HookConnectivityManager {
 
     public static final Set<Class<?>> IConnectivityManagerHookedPool = new HashSet<>();
 
+    private static void modifyNetworkInfo(@NonNull NetworkInfo info){
+        if (info.toString().toLowerCase().contains("vpn")){
+            XposedHelpers.setObjectField(info,"mTypeName",null);
+            XposedHelpers.setObjectField(info,"mSubtypeName",null);
+//                    continue;
+        }
+        NetworkInfo.State state = NetworkInfo.State.CONNECTED;
+        NetworkInfo.DetailedState detailedState = NetworkInfo.DetailedState.CONNECTED;
+
+        if (!info.getTypeName().contains("WIFI")){
+            state = NetworkInfo.State.DISCONNECTED;
+            detailedState = NetworkInfo.DetailedState.DISCONNECTED;
+        }
+
+        XposedHelpers.setObjectField(info,"mState",state);
+        XposedHelpers.setObjectField(info,"mDetailedState",detailedState);
+        XposedHelpers.setObjectField(info,"extra",null);
+        XposedHelpers.setObjectField(info,"mReason",null);
+        XposedHelpers.setBooleanField(info,"mIsRoaming",false);
+        XposedHelpers.setBooleanField(info,"mIsFailover",false);
+        XposedHelpers.setBooleanField(info,"mIsAvailable",true);
+    }
+
     //TODO:Randomize
     public static void hookIConnectivityManager(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,IConnectivityManagerHookedPool)){return;}
@@ -84,7 +119,20 @@ public class HookConnectivityManager {
 //        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkInfoForUid",FAKE_NETWORK_INFO_INSTANCE,getSystemChecker_UidAt(0));
 //        hookAllMethodsWithCache_Auto(hookClass,"getNetworkInfo",FAKE_NETWORK_INFO_INSTANCE);
 //        hookAllMethodsWithCache_Auto(hookClass,"getNetworkInfoForUid",FAKE_NETWORK_INFO_INSTANCE,getSystemChecker_UidAt(1));
-//        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",FAKE_NETWORK_INFO_ARR);
+//        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+//            NetworkInfo[] infos = (NetworkInfo[]) param.getResult();
+//            List<NetworkInfo> newInfos = new ArrayList<>(infos.length);
+//            if (infos == null){return;}
+//            for (NetworkInfo info:infos){
+//                if (info == null){continue;}
+//                modifyNetworkInfo(info);
+//                newInfos.add(info);
+//            }
+//            param.setResult(newInfos.toArray(EMPTY_NETWORK_INFO_ARRAY));
+//        }));
+//        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",showAfter,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",FAKE_NETWORK_INFO_ARR);
+
 //        hookAllMethodsWithCache_Auto(hookClass,"getNetworkForType",returnNetworkByCallingUID);
 //        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworks",returnNetworkArrayByCallingUID);
         hookAllMethodsWithCache_Auto(hookClass,"getDefaultNetworkCapabilitiesForUser",EmptyArrays.EMPTY_NETWORK_CAPABILITY_ARRAY,getSystemChecker_PackageNameAt(1));//NetworkCapabilities[]

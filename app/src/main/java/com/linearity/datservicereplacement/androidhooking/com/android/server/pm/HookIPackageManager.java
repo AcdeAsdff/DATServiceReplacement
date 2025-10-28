@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.pm;
 
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
 import static com.linearity.datservicereplacement.StartHook.IPackageManagers;
@@ -42,7 +43,10 @@ public class HookIPackageManager {
 ////    hookAllMethodsWithCache_Auto(hookClass,"queryPermissionsByGroup",List);
 ////    hookAllMethodsWithCache_Auto(hookClass,"getPermissionGroupInfo",PermissionGroupInfo);
 ////    hookAllMethodsWithCache_Auto(hookClass,"getAllPermissionGroups",List);
-////    hookAllMethodsWithCache_Auto(hookClass,"getApplicationInfo",ApplicationInfo);
+        hookAllMethodsWithCache_Auto(hookClass,"getApplicationInfo",new SimpleExecutorWithMode(MODE_AFTER,param -> {
+            ApplicationInfo info = (ApplicationInfo) param.getResult();
+            info.flags &= ~(FLAG_DEBUGGABLE);
+        }));
 ////    hookAllMethodsWithCache_Auto(hookClass,"getActivityInfo",ActivityInfo);
 ////    hookAllMethodsWithCache_Auto(hookClass,"getReceiverInfo",ActivityInfo);
 ////    hookAllMethodsWithCache_Auto(hookClass,"getServiceInfo",ServiceInfo);
@@ -80,7 +84,11 @@ public class HookIPackageManager {
                 }else {
                     toIdentify = (List<ApplicationInfo>) result;
                 }
-                toIdentify.removeIf(appInfo -> !isSystemApplicationInfo(appInfo));
+                toIdentify.removeIf(appInfo -> {
+                    appInfo.flags  &= ~(FLAG_DEBUGGABLE);
+                    return !isSystemApplicationInfo(appInfo);
+                });
+
             }catch (Exception e){
                 LoggerLog(e);
             }

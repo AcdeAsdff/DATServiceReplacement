@@ -1,10 +1,20 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.am;
 
+import static com.linearity.datservicereplacement.ReturnIfNonSys.findArgByClassInArgs;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.findClassIndexAndObjectInArgs;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
 import static com.linearity.datservicereplacement.StartHook.callOnStarted;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.hookPackageManager.isSystemApplicationInfo;
 import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+
+import android.content.pm.ApplicationInfo;
+
+import com.linearity.utils.NotFinished;
+import com.linearity.utils.SimpleExecutor;
+import com.linearity.utils.SystemAppChecker;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -23,6 +33,7 @@ public class HookAMS {
 
     public static void doHook(){
         classesAndHooks.put("com.android.server.am.ActivityManagerService",HookAMS::hookSystemReady);
+        classesAndHooks.put("com.android.server.am.ActivityManagerService",HookAMS::hookAMS);
     }
 
     private static final Queue<XC_MethodHook.Unhook> toUnregister = new ConcurrentLinkedQueue<>();
@@ -93,7 +104,39 @@ public class HookAMS {
 //            }
 //        });
     }
+    @NotFinished
+    private static void hookAMS(Class<?> hookClass){
+        Class<?> hostingRecordClass = null;
+        try {
+            hostingRecordClass = hookClass.getClassLoader().loadClass("com.android.server.am.HostingRecord");
+        }catch (Exception e){
+            LoggerLog(e);
+        }
+        if (hostingRecordClass == null){
+            hostingRecordClass = XposedHelpers.findClassIfExists("com.android.server.am.HostingRecord",hookClass.getClassLoader());
+        }
+        Class<?> finalHostingRecordClass = hostingRecordClass;
+        hookAllMethodsWithCache_Auto(hookClass, "startProcessLocked", (SimpleExecutor) param -> {
 
+            Object hostingRecord = findArgByClassInArgs(param.args, finalHostingRecordClass);
+            if (hostingRecord == null){return;}
+            if (XposedHelpers.getBooleanField(hostingRecord,"mIsTopApp")){
+                return;
+            }
+            Exception checkException = new Exception("prevent autostart");
+            for (StackTraceElement element:checkException.getStackTrace()){
+                if (element.getMethodName().equals("scheduleReceiverColdLocked")){
+                    LoggerLog(checkException);
+                    param.setResult(null);
+                    return;
+                }
+            }
+        }, param -> {
+            ApplicationInfo appInfo = findArgByClassInArgs(param.args,ApplicationInfo.class);
+            if (appInfo == null){return true;}
+            return isSystemApplicationInfo(appInfo);
+        });
+    }
 
 
 }

@@ -280,6 +280,7 @@ public class ExpectInfo {
         constMap.put("system_locales","zh-CN");
         constMap.put("speak_password","1");
         constMap.put("adb_wifi_enabled","0");
+        constMap.put("adb_enabled","0");
         constMap.put("peak_refresh_rate","0");
         constMap.put("verifier_verify_adb_installs","1");
         constMap.put("accessibility_enabled","0");
@@ -289,15 +290,14 @@ public class ExpectInfo {
         kvMap.put("time_12_24", random.nextBoolean()?"24":"12");
         kvMap.put("haptic_feedback_enabled", random.next0or1());
         kvMap.put("sound_effects_enabled", random.next0or1());
-        kvMap.put("adb_enabled", random.next0or1());
         kvMap.put("screen_brightness_mode", random.next0or1());
         kvMap.put("enable_freeform_support", random.next0or1());
         kvMap.put("one_handed_mode_enabled", random.next0or1());
         kvMap.put("swipe_bottom_to_notification_enabled", random.next0or1());
         kvMap.put("battery_estimates_last_update_time",String.valueOf(Math.min(Math.max(random.nextLong(),1717751189 + random.nextInt(1000000)),System.currentTimeMillis() - 10000)));
         kvMap.put("time_remaining_estimate_millis",random.nextBoolean()?"-1":String.valueOf(random.nextLong()));
-        kvMap.put("animator_duration_scale",String.valueOf(random.nextSmallDouble(1.1)));
-        kvMap.put("transition_animation_scale",String.valueOf(random.nextSmallDouble(1.1)));
+        kvMap.put("animator_duration_scale",String.valueOf(random.nextSmallDouble(1.1) + 0.01));
+        kvMap.put("transition_animation_scale",String.valueOf(random.nextSmallDouble(1.1) + 0.01));
         kvMap.put("sysui_tuner_demo_on", random.next0or1());
         kvMap.put("sysui_demo_allowed", random.next0or1());
         kvMap.put("sysui_tuner_version",String.valueOf(random.nextInt(5)));
@@ -390,6 +390,9 @@ public class ExpectInfo {
         kvMap.put("ui_night_mode",random.nextBoolean());
         kvMap.put("auto_test_mode_on",false);
         kvMap.put("accountNickname",random.nextString(random.nextInt(8)+5));
+        kvMap.put("bluetooth_on",String.valueOf(random.next0or1()));
+        kvMap.put("navigation_mode",String.valueOf(random.next0or1()));
+        kvMap.put("miui_terms_agreed_time",String.valueOf(1672545458L + random.nextInt(31536000*2)));
 
     }
     

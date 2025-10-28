@@ -8,6 +8,7 @@ import android.app.usage.NetworkStats;
 import android.content.ComponentName;
 import android.content.SyncAdapterType;
 import android.net.NetworkCapabilities;
+import android.net.NetworkInfo;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -21,6 +22,8 @@ public class EmptyArrays {
     public static final Account[] EMPTY_ACCOUNT_ARRAY = new Account[0];
     public static final AuthenticatorDescription[] EMPTY_AUTHENTICATOR_DESCRIPTION_ARRAY = new AuthenticatorDescription[0];
     public static final NetworkCapabilities[] EMPTY_NETWORK_CAPABILITY_ARRAY = new NetworkCapabilities[0];
+    public static final NetworkInfo[] EMPTY_NETWORK_INFO_ARRAY = new NetworkInfo[0];
+
     public static final Object[] EMPTY_NETWORK_STATE_ARRAY = (Object[]) Array.newInstance(NetworkStateClass,0);
     public static final ComponentName EMPTY_COMPONENT_NAME = new ComponentName("","");
     public static final SyncAdapterType[] EMPTY_SYNC_ADAPTER_TYPE_ARRAY = new SyncAdapterType[0];

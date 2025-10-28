@@ -407,7 +407,7 @@ float rand(vec2 co) {
 void main() {
     vec2 onePixel = 1.0 / texSize;
     vec4 c = texture2D(uTexture, vTexCoord);
-    c = eraseLSB(c, eraseDigits);
+//    c = eraseLSB(c, eraseDigits);
 
     vec4 sum = c;
     float count = 1.0;

@@ -1,5 +1,11 @@
 package com.linearity.utils;
 
+import static android.content.pm.ApplicationInfo.FLAG_ALLOW_BACKUP;
+import static android.content.pm.ApplicationInfo.FLAG_EXTERNAL_STORAGE;
+import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
+import static android.content.pm.ApplicationInfo.FLAG_PERSISTENT;
+import static android.content.pm.ApplicationInfo.FLAG_SUPPORTS_SMALL_SCREENS;
+import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_128_BIT;
 import static com.linearity.utils.AndroidConsts.BluetoothUuid.UUID_BYTES_16_BIT;
@@ -82,6 +88,9 @@ public class ExtendedRandom{
     }
     public int nextSign(){
         return nextBoolean()?-1:1;
+    }
+    public long nextSignLong(){
+        return nextBoolean()?-1L:1L;
     }
     public int[] nextIntArr(int length){
         int[] result = new int[length];
@@ -491,7 +500,8 @@ public class ExtendedRandom{
         XposedHelpers.setObjectField(toConfuse,"showUserIcon",(nextBoolean()?-1:1)*nextInt(10001));
         XposedHelpers.setObjectField(toConfuse,"logo",(nextBoolean()?-1:1)*nextInt(10001));
         XposedHelpers.setObjectField(toConfuse,"labelRes",(nextBoolean()?-1:1)*nextInt(Integer.MAX_VALUE-5));
-        XposedHelpers.setObjectField(toConfuse,"flags",nextInt(Integer.MAX_VALUE));
+        int flags = FLAG_SYSTEM | FLAG_PERSISTENT | FLAG_INSTALLED | FLAG_ALLOW_BACKUP | FLAG_SUPPORTS_SMALL_SCREENS | FLAG_EXTERNAL_STORAGE;
+        XposedHelpers.setObjectField(toConfuse,"flags",flags);
         XposedHelpers.setObjectField(toConfuse,"requiresSmallestWidthDp",0);
         XposedHelpers.setObjectField(toConfuse,"compatibleWidthLimitDp",0);
         XposedHelpers.setObjectField(toConfuse,"largestWidthLimitDp", Integer.MAX_VALUE);

@@ -71,5 +71,6 @@ dependencies {
 
     // 3. Android - Use Guava in your implementation only:
     implementation("com.google.guava:guava:33.2.1-android")
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.77'
 
 }

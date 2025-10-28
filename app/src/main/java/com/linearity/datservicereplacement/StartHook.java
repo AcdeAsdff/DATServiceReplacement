@@ -39,6 +39,7 @@ import android.util.Pair;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.linearity.datservicereplacement.androidhooking.com.android.permissioncontroller.HookPermissionManagerUI;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accessibility.HookAccessibility;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accounts.HookAccount;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookAMS;
@@ -585,6 +586,9 @@ public class StartHook implements IXposedHookLoadPackage {
 
         HookJobSchedulerService.doHook();
 
+
+        HookPermissionManagerUI.doHook();
+
 //        Others.doHook();
 
 //        HookGsmCdmaPhone.doHook();
@@ -719,13 +723,19 @@ public class StartHook implements IXposedHookLoadPackage {
 
     }
     private static final String[] constCommands = {
-            "resetprop -n ro.boot.verifiedbootstate green",
-            "resetprop -n vendor.boot.verifiedbootstate green",
-            "resetprop -n ro.secureboot.lockstate locked",
-            "resetprop -n vendor.boot.vbmeta.device_state locked",
             "resetprop -n ro.boot.vbmeta.device_state locked",
-            "resetprop -n ro.boot.flash.locked locked",
-            "resetprop -n sys.oem_unlock_allowed 0"
+            "resetprop -n ro.boot.verifiedbootstate green",
+            "resetprop -n ro.boot.flash.locked 1",
+            "resetprop -n ro.boot.veritymode enforcing",
+            "resetprop -n ro.boot.warranty_bit 0",
+            "resetprop -n ro.warranty_bit 0",
+            "resetprop -n ro.debuggable 0",
+            "resetprop -n ro.secure 1",
+            "resetprop -n ro.build.type user",
+            "resetprop -n ro.build.tags release-keys",
+            "resetprop -n ro.vendor.boot.warranty_bit 0",
+            "resetprop -n ro.vendor.warranty_bit 0",
+            "resetprop -n vendor.boot.vbmeta.device_state locked",
     };
     public static void setOtherProperties() throws NoShellException, IOException {
         Shell.cmd("resetprop").submit(result -> LoggerLog(new Exception("allProps:"
@@ -739,14 +749,7 @@ public class StartHook implements IXposedHookLoadPackage {
                 LoggerLog(new Exception("shell is not root!"));
             }
             shell.newJob()
-                    .add("resetprop -n ro.boot.verifiedbootstate green",
-                            "resetprop -n vendor.boot.verifiedbootstate green",
-                            "resetprop -n ro.secureboot.lockstate locked",
-                            "resetprop -n vendor.boot.vbmeta.device_state locked",
-                            "resetprop -n ro.boot.vbmeta.device_state locked",
-                            "resetprop -n ro.boot.flash.locked locked",
-                            "resetprop -n sys.oem_unlock_allowed 0"
-                    ).exec();
+                    .add(constCommands).exec();
             List<String> fingerPrintOut = shell.newJob().add("resetprop ro.build.fingerprint").exec().getOut();
             List<Pair<String,String>> replaceStringsInProp = new ArrayList<>();//Pair<ReplaceString,ReplaceWith>
             //fixing product code

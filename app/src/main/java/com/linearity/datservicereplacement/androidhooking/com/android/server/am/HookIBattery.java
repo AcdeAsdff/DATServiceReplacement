@@ -4,11 +4,13 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYLIST
 import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYMAP;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
 import static com.linearity.utils.ExtendedRandom.SYSTEM_INSTANCE;
 import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 
+import android.content.Context;
 import android.os.Binder;
 import android.os.Parcel;
 import android.os.RemoteException;
@@ -40,6 +42,21 @@ public class HookIBattery {
     public static void doHook(){
         classesAndHooks.put("com.android.server.am.BatteryStatsService", HookIBattery::hookIBatteryStats);
         classesAndHooks.put("com.android.server.am.BatteryService$BatteryPropertiesRegistrar", HookIBattery::hookIBatteryPropertiesRegistrar);
+        classesAndHooks.put("com.android.server.BatteryService",HookIBattery::hookBatteryService);
+
+        hookPublishBinderService();
+    }
+
+    public static void hookPublishBinderService(){
+        registerServiceHook_map.put(Context.BATTERY_SERVICE, c -> {
+            hookBatteryService(c);
+            return null;
+        });
+    }
+
+    @NotFinished
+    public static void hookBatteryService(Class<?> hookClass){
+//        listenClass(hookClass);
     }
     static int len = SYSTEM_INSTANCE.nextInt(5)+1;
     public static final Class<?> CelluarBatteryStatsClass = XposedHelpers.findClass("android.os.connectivity.CellularBatteryStats", XposedBridge.BOOTCLASSLOADER);
@@ -103,6 +120,8 @@ public class HookIBattery {
         FakeGpsBatteryStatsMap.put(callingUid,ret);
         return ret;
     }
+
+    //TODO:Randomize
     public static void hookIBatteryStats(Class<?> hookClass){
 //        listenClass(hookClass);
         hookAllMethodsWithCache_Auto(hookClass,"noteStartSensor",null);

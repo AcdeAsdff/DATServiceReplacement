@@ -20,7 +20,6 @@ public class HookContentService {
 
     public static void doHook(){
         classesAndHooks.put("com.android.server.content.ContentService",HookContentService::hookIContentService);
-
     }
 
     private static void hookIContentService(Class<?> hookClass){

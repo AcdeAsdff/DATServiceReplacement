@@ -336,11 +336,13 @@ public class HookIActivityManager {
 
         SimpleExecutor replaceIntentFilter = param -> {
 //            LoggerLog(new Exception("replacing IntentFilter:" + Arrays.deepToString(param.args)));
-            IntentFilter filter = findArgByClassInArgs(param.args,IntentFilter.class);
+            Pair<Integer,IntentFilter> pair = findClassIndexAndObjectInArgs(param.args,IntentFilter.class);
+            IntentFilter filter = pair.second;
             if (filter == null){
+                LoggerLog(new Exception("filter null!"));
                 return;
             }
-            int index = findClassIndexInArgs(param.args,IntentFilter.class);
+            int index = pair.first;
             IntentFilter replaceFilter = new IntentFilter();
 //            Object IIntentReceiverInstance = param.args[4];
 //            if (IIntentReceiverInstance != null){

@@ -811,6 +811,9 @@ public class ReturnIfNonSys {
         return -1;
     }
 
+    /**
+    * Do not use basic type like int.class,use Boxed like Integer.class instead
+     */
     public static <T> Pair<Integer,T> findClassIndexAndObjectInArgs(Object[] args, Class<T> toFind){
         boolean isInterface = toFind.isInterface();
         for (int i = 0; i < args.length; i++) {

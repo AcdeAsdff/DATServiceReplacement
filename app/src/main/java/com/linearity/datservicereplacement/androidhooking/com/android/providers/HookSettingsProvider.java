@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.providers;
 
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.nonSysPackages;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showBefore;
@@ -67,6 +68,21 @@ public class HookSettingsProvider {
                 else if (get instanceof String){
                     result.putString("value",(String) get);
                 }
+//                if (getPackageName(callingUID).contains("xiaoheihe")){
+//                    StringBuilder sb = new StringBuilder();
+//                    sb.append(callingPackageName).append(" calling ").append(param.args[0]).append(" | ").append(param.args[1]);
+//                    sb.append("\n--------------------\n");
+//                    for (String key:result.keySet()){
+//                        if (result.get(key) != null){
+//                            sb.append(key).append(" : ").append(result.get(key)).append("[").append(result.get(key).getClass()).append("]\n");
+//                        }
+//                        else {
+//                            sb.append(key).append(" : ").append(result.get(key)).append("[null]\n");
+//                        }
+//                    }
+//                    sb.append("====================");
+//                    LoggerLog(sb.toString());
+//                }
                 return;
             }
             //if not,show it

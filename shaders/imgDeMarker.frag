@@ -58,7 +58,7 @@ float rand(vec2 co) {
 void main() {
     vec2 onePixel = 1.0 / texSize;
     vec4 c = texture2D(uTexture, vTexCoord);
-    c = eraseLSB(c, eraseDigits);
+//    c = eraseLSB(c, eraseDigits);
 
     vec4 sum = c;
     float count = 1.0;
@@ -95,6 +95,4 @@ void main() {
     vec4 quantized = rgba255 / 255.0;  // no "vec4" redeclaration
 
     gl_FragColor = quantized;
-}//ERROR: 0:94: 'assign' :  cannot convert from '4-component vector of float' to 'float'
-//ERROR: 0:96: 'assign' :  cannot convert from 'float' to 'FragColor 4-component vector of float'
-//ERROR: 3 compilation errors.  No code generated.
+}
