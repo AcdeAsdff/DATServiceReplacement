@@ -179,6 +179,7 @@ public class HookScreenShot {
         hookAllMethodsWithCache_Auto(hookClass,"writeImage",(SimpleExecutor)param -> {
             try {
                 Bitmap bitmap = (Bitmap) param.args[1];
+                param.args[1] = null;
                 int bitmapIndex = 1;
                 ContentResolver resolver = (ContentResolver) param.args[0];
                 Bitmap.CompressFormat format = (Bitmap.CompressFormat) param.args[2];
@@ -208,7 +209,8 @@ public class HookScreenShot {
 //                            LoggerLog(e);
 //                        }
 //                        param.args[1] = replaceWith;
-                        bitmap.recycle();
+
+//                        bitmap.recycle();
                     }catch (Exception e){
                         LoggerLog(e);
                         param.args[1] = null;

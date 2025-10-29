@@ -126,7 +126,7 @@ public class HookAMS {
             Exception checkException = new Exception("prevent autostart");
             for (StackTraceElement element:checkException.getStackTrace()){
                 if (element.getMethodName().equals("scheduleReceiverColdLocked")){
-                    LoggerLog(checkException);
+//                    LoggerLog(checkException);
                     param.setResult(null);
                     return;
                 }

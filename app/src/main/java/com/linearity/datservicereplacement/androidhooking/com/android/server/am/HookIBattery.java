@@ -8,6 +8,7 @@ import static com.linearity.datservicereplacement.StartHook.registerServiceHook_
 import static com.linearity.utils.ExtendedRandom.SYSTEM_INSTANCE;
 import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.ModifyThrowable.cleanStackTrace;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 
 import android.content.Context;
@@ -214,22 +215,7 @@ public class HookIBattery {
         hookAllMethodsWithCache_Auto(hookClass,"getBluetoothBatteryStats",null);//BluetoothBatteryStats
         SimpleExecutor resultHealthStatsParceler = param -> {//TODO:Generate instead of throw
             RemoteException throwBack = new RemoteException();
-            List<StackTraceElement> elements = new ArrayList<>(throwBack.getStackTrace().length);
-            Arrays.stream(throwBack.getStackTrace()).forEach(
-                    element -> {
-                        String elementString = element.toString().toLowerCase();
-                        if (elementString.contains("lineage")
-                                || elementString.contains("xposed")
-                                || elementString.contains("lsphooker_")
-                                || elementString.contains("j.callback")
-                                || elementString.contains("lsposed")
-                                || elementString.contains("linearity")){
-                             return;
-                        }
-                        elements.add(element);
-                    }
-            );
-            throwBack.setStackTrace(elements.toArray(new StackTraceElement[0]));
+            cleanStackTrace(throwBack);
             param.setThrowable(throwBack);
 //            HealthStatsWriter writer = new HealthStatsWriter(new HealthKeys.Constants() );
 //            try {

@@ -12,7 +12,7 @@ public class HookPermissionManagerUI {
     }
     private static void hookAppPermissionViewModel(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"shouldShowPhotoPickerPromptForApp",true,noSystemChecker);
-        hookAllMethodsWithCache_Auto(hookClass,"expandsToStorageSupergroup",true,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"expandsToStorageSupergroup",false,noSystemChecker);
 //        hookAllMethodsWithCache_Auto(hookClass,"expandToSupergroup",true,noSystemChecker);
     }
     private static void hookKotlinUtils(Class<?> hookClass){

@@ -39,7 +39,9 @@ import android.util.Pair;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.linearity.datservicereplacement.androidhooking.HookParcel;
 import com.linearity.datservicereplacement.androidhooking.com.android.permissioncontroller.HookPermissionManagerUI;
+import com.linearity.datservicereplacement.androidhooking.com.android.providers.HookMediaProvider;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accessibility.HookAccessibility;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accounts.HookAccount;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookAMS;
@@ -588,6 +590,8 @@ public class StartHook implements IXposedHookLoadPackage {
 
 
         HookPermissionManagerUI.doHook();
+        HookMediaProvider.doHook();
+        HookParcel.doHook();
 
 //        Others.doHook();
 
