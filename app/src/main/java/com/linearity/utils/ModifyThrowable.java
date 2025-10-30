@@ -1,10 +1,13 @@
 package com.linearity.utils;
 
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_STACKTRACE_ELEMENT_ARRAY;
+import static com.linearity.utils.LoggerUtils.LoggerLog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import de.robv.android.xposed.XposedHelpers;
 
 public class ModifyThrowable {
 
@@ -28,6 +31,12 @@ public class ModifyThrowable {
                     elementList.add(element);
                 }
         );
-        throwable.setStackTrace(elementList.toArray(EMPTY_STACKTRACE_ELEMENT_ARRAY));
+        try {
+            XposedHelpers.setObjectField(throwable,"stackTrace",elementList.toArray(EMPTY_STACKTRACE_ELEMENT_ARRAY));
+        }catch (Exception e){
+            LoggerLog(e);
+//            throwable.getClass().getField("stackTrace").set(throwable,elementList.toArray(EMPTY_STACKTRACE_ELEMENT_ARRAY));
+        }
+//        throwable.setStackTrace(elementList.toArray(EMPTY_STACKTRACE_ELEMENT_ARRAY));
     }
 }

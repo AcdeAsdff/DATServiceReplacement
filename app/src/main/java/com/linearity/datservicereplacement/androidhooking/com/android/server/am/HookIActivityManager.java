@@ -925,16 +925,6 @@ public class HookIActivityManager {
         }
         return modifyConfigurationInternal(toModify);
     }
-    private static Configuration modifyConfigurationInternal(Configuration toModify){
-        if (toModify == null){return null;}
-        Configuration configuration = new Configuration(toModify);
-        XposedHelpers.setObjectField(configuration, "windowConfiguration", modifyWindowConfiguration(configuration.windowConfiguration));
-        configuration.setLocales(ZH_CN_LOCALE);
-        configuration.userSetLocale = false;
-        configuration.navigationHidden = NAVIGATIONHIDDEN_YES;
-
-        return configuration;
-    }
     public static Configuration modifyConfigurationWithUid(Configuration toModify,int uid){
         if (toModify == null){return null;}
         Configuration configuration = modifyConfigurationInternal(toModify);
@@ -949,14 +939,24 @@ public class HookIActivityManager {
 
         return configuration;
     }
+    public static Configuration modifyConfigurationInternal(Configuration toModify){
+        if (toModify == null){return null;}
+        Configuration configuration = new Configuration(toModify);
+        XposedHelpers.setObjectField(configuration, "windowConfiguration", modifyWindowConfiguration(configuration.windowConfiguration));
+        configuration.setLocales(ZH_CN_LOCALE);
+        configuration.userSetLocale = false;
+//        configuration.navigationHidden = NAVIGATIONHIDDEN_YES;
+
+        return configuration;
+    }
     public static WindowConfiguration modifyWindowConfiguration(WindowConfiguration toModify){
         if (toModify == null){return null;}
         WindowConfiguration windowConfiguration = new WindowConfiguration(toModify);
         windowConfiguration.setActivityType(ACTIVITY_TYPE_STANDARD);
-        windowConfiguration.setDisplayWindowingMode(WINDOWING_MODE_FULLSCREEN);
-        windowConfiguration.setRotation(0);
-        windowConfiguration.setDisplayRotation(0);
-        windowConfiguration.setWindowingMode(WINDOWING_MODE_FULLSCREEN);
+//        windowConfiguration.setDisplayWindowingMode(WINDOWING_MODE_FULLSCREEN);
+//        windowConfiguration.setRotation(0);
+//        windowConfiguration.setDisplayRotation(0);
+//        windowConfiguration.setWindowingMode(WINDOWING_MODE_FULLSCREEN);
         return windowConfiguration;
     }
     public static final SimpleExecutor modifyConfigurationExecutor = param -> {

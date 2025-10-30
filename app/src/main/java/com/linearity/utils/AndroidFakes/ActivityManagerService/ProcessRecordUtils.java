@@ -1,6 +1,5 @@
 package com.linearity.utils.AndroidFakes.ActivityManagerService;
 
-import static com.linearity.datservicereplacement.StartHook.WHITELIST_PACKAGE_NAMES;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 
 import android.content.pm.ApplicationInfo;
@@ -15,7 +14,7 @@ import de.robv.android.xposed.XposedHelpers;
  */
 public class ProcessRecordUtils {
     public static Class<?> PROCESS_RECORD_CLASS;
-    private static Field applicationInfoField;
+    public static Field applicationInfoField;
     private static Field processInfoField;
     private static Field uidField;
     public static void initProcessRecordUtils(ClassLoader classLoader){
@@ -65,26 +64,6 @@ public class ProcessRecordUtils {
             LoggerLog(e);
         }
         return null;
-    }
-    public static boolean isSystemProcessRecord(Object processRecord){
-        try {
-            if (processRecord == null){
-                return true;//null receiver
-            }
-            ApplicationInfo appInfo = (ApplicationInfo) applicationInfoField.get(processRecord);
-            if (appInfo != null){
-                String packageName = appInfo.packageName;
-                if (packageName != null){
-                    if (WHITELIST_PACKAGE_NAMES.contains(packageName)){
-                        return true;
-                    }
-                }
-                if (!appInfo.isSystemApp()){return false;}
-            }
-        }catch (Exception e){
-            LoggerLog(e);
-        }
-        return true;
     }
 
     public static class ProcessRecordInformation{

@@ -2,6 +2,7 @@ package com.linearity.datservicereplacement.androidhooking.com.android.server;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYLIST;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_UidAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
@@ -9,6 +10,8 @@ import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
 import static com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils.FAKE_NETWORK_INFO_ARR;
+import static com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils.returnNetworkArrayByCallingUID;
+import static com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils.returnNetworkByCallingUID;
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_NETWORK_INFO_ARRAY;
 import static com.linearity.utils.FakeClass.java.util.EmptyArrays.EMPTY_NETWORK_STATE_ARRAY;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
@@ -113,7 +116,10 @@ public class HookConnectivityManager {
     //TODO:Randomize
     public static void hookIConnectivityManager(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,IConnectivityManagerHookedPool)){return;}
-//        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetwork",returnNetworkByCallingUID);//Network
+        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkForUidInternal",returnNetworkByCallingUID);//Network
+        hookAllMethodsWithCache_Auto(hookClass,"getVpnForUid",null,getSystemChecker_UidAt(0));
+        hookAllMethodsWithCache_Auto(hookClass,"getVpnUnderlyingNetworks",null,getSystemChecker_UidAt(0));
+        hookAllMethodsWithCache_Auto(hookClass,"getNetworkAgentInfoForUid",null,getSystemChecker_UidAt(0));
 //        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkForUid",returnNetworkByCallingUID);
 //        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkInfo",FAKE_NETWORK_INFO_INSTANCE);
 //        hookAllMethodsWithCache_Auto(hookClass,"getActiveNetworkInfoForUid",FAKE_NETWORK_INFO_INSTANCE,getSystemChecker_UidAt(0));
@@ -133,15 +139,15 @@ public class HookConnectivityManager {
 //        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",showAfter,noSystemChecker);
         hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkInfo",FAKE_NETWORK_INFO_ARR);
 
-//        hookAllMethodsWithCache_Auto(hookClass,"getNetworkForType",returnNetworkByCallingUID);
-//        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworks",returnNetworkArrayByCallingUID);
+        hookAllMethodsWithCache_Auto(hookClass,"getNetworkForType",returnNetworkByCallingUID);
+        hookAllMethodsWithCache_Auto(hookClass,"getAllNetworks",returnNetworkArrayByCallingUID);
         hookAllMethodsWithCache_Auto(hookClass,"getDefaultNetworkCapabilitiesForUser",EmptyArrays.EMPTY_NETWORK_CAPABILITY_ARRAY,getSystemChecker_PackageNameAt(1));//NetworkCapabilities[]
         hookAllMethodsWithCache_Auto(hookClass,"isNetworkSupported",true);
         hookAllMethodsWithCache_Auto(hookClass,"getActiveLinkProperties",null);
         hookAllMethodsWithCache_Auto(hookClass,"getLinkPropertiesForType",null);
         hookAllMethodsWithCache_Auto(hookClass,"getLinkProperties",null);
         hookAllMethodsWithCache_Auto(hookClass,"getRedactedLinkPropertiesForPackage",null,getSystemChecker_PackageNameAt(2));//LinkProperties
-        hookAllMethodsWithCache_Auto(hookClass,"getNetworkCapabilities",null,getSystemChecker_PackageNameAt(1));//NetworkCapabilities
+        hookAllMethodsWithCache_Auto(hookClass,"getNetworkCapabilities",null);//NetworkCapabilities
         hookAllMethodsWithCache_Auto(hookClass,"getRedactedNetworkCapabilitiesForPackage",null,getSystemChecker_PackageNameAt(2));//NetworkCapabilities
 
         hookAllMethodsWithCache_Auto(hookClass,"getAllNetworkState",EMPTY_NETWORK_STATE_ARRAY);
@@ -171,8 +177,8 @@ public class HookConnectivityManager {
 //        hookAllMethodsWithCache_Auto(hookClass,"requestNetwork",null,getSystemChecker_PackageNameAt(8));
 //        hookAllMethodsWithCache_Auto(hookClass,"pendingRequestForNetwork",null,getSystemChecker_PackageNameAt(2));
 //        hookAllMethodsWithCache_Auto(hookClass,"releasePendingNetworkRequest",null);
-//        hookAllMethodsWithCache_Auto(hookClass,"listenForNetwork",null,getSystemChecker_PackageNameAt(4));
-//        hookAllMethodsWithCache_Auto(hookClass,"pendingListenForNetwork",null,getSystemChecker_PackageNameAt(2));
+        hookAllMethodsWithCache_Auto(hookClass,"listenForNetwork",null,getSystemChecker_PackageNameAt(-2));
+        hookAllMethodsWithCache_Auto(hookClass,"pendingListenForNetwork",null,getSystemChecker_PackageNameAt(-2));
 //        hookAllMethodsWithCache_Auto(hookClass,"releaseNetworkRequest",null);
         hookAllMethodsWithCache_Auto(hookClass,"setAcceptUnvalidated",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"setAcceptPartialConnectivity",null);
@@ -219,7 +225,7 @@ public class HookConnectivityManager {
 //        hookAllMethodsWithCache_Auto(hookClass,"getFirewallChainEnabled",true);
 //        hookAllMethodsWithCache_Auto(hookClass,"replaceFirewallChain",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"getCompanionDeviceManagerProxyService",null);//IBinder
-//        hookAllMethodsWithCache_Auto(hookClass,"setVpnNetworkPreference",null);
+        hookAllMethodsWithCache_Auto(hookClass,"setVpnNetworkPreference",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"setTestLowTcpPollingTimerForKeepalive",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"getRoutingCoordinatorService",null);//IBinder
     }

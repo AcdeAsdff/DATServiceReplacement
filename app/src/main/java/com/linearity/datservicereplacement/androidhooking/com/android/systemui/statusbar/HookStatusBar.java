@@ -1,6 +1,7 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.systemui.statusbar;
 
 import static android.app.StatusBarManager.NAV_BAR_MODE_DEFAULT;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.CONSTRUCTOR_METHOD_STRING;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findArgByClassInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
@@ -27,7 +28,7 @@ public class HookStatusBar {
         classesAndHooks.put("com.android.systemui.statusbar.CommandQueue",HookStatusBar::hookIStatusBar);
         classesAndHooks.put("com.android.server.notification.NotificationManagerService$StatusBarNotificationHolder",HookStatusBar::hookIStatusBarNotificationHolder);
 //        classesAndHooks.put("com.android.systemui.statusbar.StatusBarStateControllerImpl", HookStatusBar::hookStatusBarStateController);
-        classesAndHooks.put("android.app.StatusBarManager$UndoCallback",HookStatusBar::hookIUndoMediaTransferCallback);
+//        classesAndHooks.put("android.app.StatusBarManager$UndoCallback",HookStatusBar::hookIUndoMediaTransferCallback);
         classesAndHooks.put("com.android.systemui.statusbar.window.StatusBarWindowController",HookStatusBar::hookStatusBarWindowController);
 
 
@@ -38,36 +39,38 @@ public class HookStatusBar {
 //        listenClass(hookClass,toAvoid);
     }
     public static void hookStatusBarWindowController(Class<?> hookClass){
-        hookAllMethodsWithCache_Auto(hookClass,"setForceStatusBarVisible",false,noSystemChecker);
-        hookAllMethodsWithCache_Auto(hookClass,"setOngoingProcessRequiresStatusBarVisible",false,noSystemChecker);
-        hookAllMethodsWithCache_Auto(hookClass,"setLaunchAnimationRunning",false,noSystemChecker);
+        SimpleExecutor paramArg0False=(SimpleExecutor)param -> param.args[0]=false;
+        hookAllMethodsWithCache_Auto(hookClass,"setForceStatusBarVisible",paramArg0False,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"setOngoingProcessRequiresStatusBarVisible",paramArg0False,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"setLaunchAnimationRunning",paramArg0False,noSystemChecker);
         hookAllMethodsWithCache_Auto(hookClass,"getBackgroundView",new SimpleExecutorWithMode(MODE_AFTER,param -> {
             View v = (View) param.getResult();
             if (v != null){
                 v.setVisibility(View.INVISIBLE);
             }
         }),noSystemChecker);
-        SimpleExecutor invisibleViewInArgs = param -> {
-            for (Object o:param.args){
-                if (o instanceof View v){
-                    v.setVisibility(View.INVISIBLE);
-                }
-            }
-        };
-        hookAllMethodsWithCache_Auto(hookClass,"addViewToWindow",invisibleViewInArgs,noSystemChecker);
-        hookAllMethodsWithCache_Auto(hookClass,"<init>",invisibleViewInArgs,noSystemChecker);
-        LoggerLog("listening class:" + hookClass);
-        listenClass(hookClass);
-        Class<?> statusBarWindowViewClass = XposedHelpers.findClassIfExists("com.android.systemui.statusbar.window.StatusBarWindowView",hookClass.getClassLoader());
-        if (statusBarWindowViewClass != null){
-            LoggerLog("listening class:" + statusBarWindowViewClass);
-            listenClass(statusBarWindowViewClass);
-        }
-        Class<?> statusBarWindowStateControllerClass = XposedHelpers.findClassIfExists("com.android.systemui.statusbar.window.StatusBarWindowStateController",hookClass.getClassLoader());
-        if (statusBarWindowStateControllerClass != null){
-            LoggerLog("listening class:" + statusBarWindowStateControllerClass);
-            listenClass(statusBarWindowStateControllerClass);
-        }
+//        SimpleExecutor invisibleViewInArgs = param -> {
+//            for (Object o:param.args){
+//                if (o instanceof View v){
+//                    v.setVisibility(View.INVISIBLE);
+//                }
+//            }
+//        };
+//        hookAllMethodsWithCache_Auto(hookClass,"addViewToWindow",invisibleViewInArgs,noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,CONSTRUCTOR_METHOD_STRING,invisibleViewInArgs,noSystemChecker);
+
+//        LoggerLog("listening class:" + hookClass);
+//        listenClass(hookClass);
+//        Class<?> statusBarWindowViewClass = XposedHelpers.findClassIfExists("com.android.systemui.statusbar.window.StatusBarWindowView",hookClass.getClassLoader());
+//        if (statusBarWindowViewClass != null){
+//            LoggerLog("listening class:" + statusBarWindowViewClass);
+//            listenClass(statusBarWindowViewClass);
+//        }
+//        Class<?> statusBarWindowStateControllerClass = XposedHelpers.findClassIfExists("com.android.systemui.statusbar.window.StatusBarWindowStateController",hookClass.getClassLoader());
+//        if (statusBarWindowStateControllerClass != null){
+//            LoggerLog("listening class:" + statusBarWindowStateControllerClass);
+//            listenClass(statusBarWindowStateControllerClass);
+//        }
     }
     public static void hookIStatusBarNotificationHolder(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"get",null);//StatusBarNotification

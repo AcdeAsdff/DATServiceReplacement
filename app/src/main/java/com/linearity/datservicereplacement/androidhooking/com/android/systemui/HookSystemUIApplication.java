@@ -31,8 +31,11 @@ public class HookSystemUIApplication {
                     }else {
                         LoggerLog(new Exception("not found:com.android.systemui.statusbar.window.StatusBarWindowView"));
                     }
-                }catch (Exception e){
-                    e.printStackTrace();
+                }catch (ClassNotFoundException clsNotFound){
+                    //pass
+                }
+                catch (Exception e){
+                    LoggerLog(e);
                 }
             }
 

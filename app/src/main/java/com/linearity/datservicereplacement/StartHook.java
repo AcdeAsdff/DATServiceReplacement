@@ -37,8 +37,12 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Pair;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Multimaps;
 import com.linearity.datservicereplacement.androidhooking.HookParcel;
 import com.linearity.datservicereplacement.androidhooking.com.android.permissioncontroller.HookPermissionManagerUI;
 import com.linearity.datservicereplacement.androidhooking.com.android.providers.HookMediaProvider;
@@ -46,10 +50,12 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.acc
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accounts.HookAccount;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookAMS;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookProcessList;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.content.HookContentService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.job.HookJobSchedulerService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.hookPackageManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.policy.keyguard.HookKeyGuard;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookClientLifecycleManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookIActivityTaskManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.adservices.HookAd;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.alarm.HookAlarm;
@@ -101,9 +107,11 @@ import com.topjohnwu.superuser.NoShellException;
 import com.topjohnwu.superuser.Shell;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -111,6 +119,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -143,6 +154,13 @@ public class StartHook implements IXposedHookLoadPackage {
             return true;
         }
         pool.add(toCheck);
+        return false;
+    }
+    public static <T> boolean isSetRegistered(T toCheck,Map<T,Boolean> pool){
+        if (pool.containsKey(toCheck)) {
+            return true;
+        }
+        pool.put(toCheck,true);
         return false;
     }
     public static final Set<String> WHITELIST_PACKAGE_NAMES = new HashSet<>();
@@ -498,8 +516,8 @@ public class StartHook implements IXposedHookLoadPackage {
 //        }
 
     }
-    public static Multimap<String, ClassHookExecutor> classesAndHooks = HashMultimap.create();
-    public static final Set<ClassLoader> iteratedClassLoaders = new HashSet<>();
+    public static Multimap<String, ClassHookExecutor> classesAndHooks = Multimaps.synchronizedSetMultimap(HashMultimap.create());
+    public static final Set<ClassLoader> iteratedClassLoaders = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
     public static boolean hookLocation = false;
 
     /**
@@ -514,6 +532,7 @@ public class StartHook implements IXposedHookLoadPackage {
         HookIPackageManager.doHook();
         hookPackageManager.doHook();
         HookAppFilter.doHook();
+        HookProcessList.doHook();
 
         HookInputMethod.doHook();
         HookIClipboard.doHook();
@@ -593,6 +612,8 @@ public class StartHook implements IXposedHookLoadPackage {
         HookMediaProvider.doHook();
         HookParcel.doHook();
 
+        HookClientLifecycleManager.doHook();
+
 //        Others.doHook();
 
 //        HookGsmCdmaPhone.doHook();
@@ -609,7 +630,13 @@ public class StartHook implements IXposedHookLoadPackage {
     public static void hookForClassLoader(ClassLoader classLoader){
         if (isSetRegistered(classLoader,iteratedClassLoaders)){return;}
         for (String className:classesAndHooks.keys()){
+
             Class<?> hookClass = XposedHelpers.findClassIfExists(className,classLoader);
+            if (hookClass == null){
+                try {
+                    hookClass = classLoader.loadClass(className);
+                }catch (Exception ignore){}
+            }
             if (hookClass != null){
                 for (ClassHookExecutor executor:classesAndHooks.get(className)){
                     Pair<String,ClassHookExecutor> executorKey = new Pair<>(className,executor);
@@ -627,7 +654,13 @@ public class StartHook implements IXposedHookLoadPackage {
         }
         doHook(classLoader);
     }
-    public static Multimap<ClassLoader, Pair<String,ClassHookExecutor>> usedExecutors = HashMultimap.create();
+    private static final ConcurrentMap<ClassLoader, Collection<Pair<String,ClassHookExecutor>>> usedExecutors_wrappedMap = new MapMaker()
+            .weakKeys()
+            .makeMap();
+    public static final Multimap<ClassLoader, Pair<String,ClassHookExecutor>> usedExecutors = Multimaps.newMultimap(
+            usedExecutors_wrappedMap,
+            ConcurrentHashMap::newKeySet
+    );
     public static final Set<Class<?>> hookedClassLoaderPool = new HashSet<>();
     static {
         hookedClassLoaderPool.add(XposedBridge.BOOTCLASSLOADER.getClass());

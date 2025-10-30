@@ -16,3 +16,5 @@ local.properties
 /test/
 /spider2Google/dumpSys/dumped/
 /excludes/
+/logcat.txt
+/logcat2.txt

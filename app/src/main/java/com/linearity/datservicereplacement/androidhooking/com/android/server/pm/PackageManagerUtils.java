@@ -11,6 +11,7 @@ import android.app.AndroidAppHelper;
 import android.app.Application;
 import android.content.AttributionSource;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -458,13 +459,19 @@ public class PackageManagerUtils {
 //        LoggerLog(source);
         return isSystemApp_preventStackOverflow(source,new HashSet<>());
     }
+    public static boolean isSystemActivityInfo(ActivityInfo info){
+        return isSystemApplicationInfo(info.applicationInfo);
 
+    }
+//    public static boolean isSystemActivityRecord(Object activityRecord){
+//
+//    }
     public static boolean isSystemTask(Object taskObj) {
         try {
-            ApplicationInfo appInfo = (ApplicationInfo) XposedHelpers.getObjectField(taskObj, "applicationInfo");
-            if (appInfo != null) {
-                return isSystemApplicationInfo(appInfo);
-            }
+//            Object appInfo = (Object) XposedHelpers.getObjectField(taskObj, "mChildPipActivity");
+//            if (appInfo != null) {
+//                return isSystemApplicationInfo(appInfo);
+//            }
 
             int uid = XposedHelpers.getIntField(taskObj, "effectiveUid");
             return isSystemApp(uid);

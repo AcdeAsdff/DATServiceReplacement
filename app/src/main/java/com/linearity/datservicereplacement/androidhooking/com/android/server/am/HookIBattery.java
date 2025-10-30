@@ -216,7 +216,9 @@ public class HookIBattery {
         SimpleExecutor resultHealthStatsParceler = param -> {//TODO:Generate instead of throw
             RemoteException throwBack = new RemoteException();
             cleanStackTrace(throwBack);
-            param.setThrowable(throwBack);
+            param.setResult(null);
+//            param.setThrowable(throwBack);
+
 //            HealthStatsWriter writer = new HealthStatsWriter(new HealthKeys.Constants() );
 //            try {
 //                param.setResult(new HealthStatsParceler(parcel));

@@ -1,6 +1,7 @@
 package com.linearity.datservicereplacement;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.SyntheticNameResolver.resolveMethodName;
+import static com.linearity.datservicereplacement.StartHook.WHITELIST_PACKAGE_NAMES;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.nonSysPackages;
@@ -12,6 +13,7 @@ import static com.linearity.utils.SimpleExecutor.*;
 
 import static java.lang.System.identityHashCode;
 
+import android.app.IApplicationThread;
 import android.bluetooth.BluetoothAdapter;
 import android.content.AttributionSource;
 import android.content.ContentProvider;
@@ -30,14 +32,17 @@ import android.util.ArrayMap;
 import android.util.Pair;
 import android.util.SparseArray;
 
+import com.linearity.utils.AndroidFakes.ActivityManagerService.ProcessRecordUtils;
 import com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils;
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
 import com.linearity.utils.ObjectsToString;
+import com.linearity.utils.ProcessListUtils;
 import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 import com.linearity.utils.SystemAppChecker;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -62,6 +67,7 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class ReturnIfNonSys {
+    public static final String CONSTRUCTOR_METHOD_STRING = "<init>";
     public static boolean mSystemReady = false;
     public static final Map<Pair<SimpleExecutorWithMode,SystemAppChecker>,XC_MethodHook> SimpleExecutor_Map = new HashMap<>();
     public static XC_MethodHook simpleExecutorWithoutAttrSource(SimpleExecutorWithMode simpleExecutorWithMode){
@@ -341,6 +347,7 @@ public class ReturnIfNonSys {
 
     public static Network constructNetwork(int netId,boolean mPrivateDnsBypass){
         try {
+//            return new Network(netId,mPrivateDnsBypass);
             return NetworkConstructUtils.NETWORK_CONSTRUCTOR.newInstance(netId,mPrivateDnsBypass);
         }catch (Exception e){
             LoggerLog(e);
@@ -349,7 +356,7 @@ public class ReturnIfNonSys {
     }
     public static Network constructNetworkByUID(int callingUID){
         ExtendedRandom extendedRandom = new ExtendedRandom(publicSeed ^ (((long) callingUID) * Network.class.getCanonicalName().hashCode()));
-        return constructNetwork(extendedRandom.nextInt(Integer.MAX_VALUE/5),extendedRandom.nextBoolean());
+        return constructNetwork(extendedRandom.nextInt(Integer.MAX_VALUE/5),false);
     }
 
 
@@ -545,6 +552,44 @@ public class ReturnIfNonSys {
         return hookAllMethodsWithCache_Auto(hookClass,methodName,object,defaultSystemChecker);
     }
 
+    public static boolean isSystemProcessRecord(Object processRecord){
+        try {
+            if (processRecord == null){
+                return true;//null receiver
+            }
+            ApplicationInfo appInfo = (ApplicationInfo) ProcessRecordUtils.applicationInfoField.get(processRecord);
+            if (appInfo != null){
+                String packageName = appInfo.packageName;
+                if (packageName != null){
+                    if (WHITELIST_PACKAGE_NAMES.contains(packageName)){
+                        return true;
+                    }
+                }
+                if (!appInfo.isSystemApp()){return false;}
+            }
+        }catch (Exception e){
+            LoggerLog(e);
+        }
+        return true;
+    }
+
+    public static boolean isSystemIApplicationThread(IApplicationThread thread){
+        try {
+            for (Object processListRef: ProcessListUtils.ALL_PROCESS_LISTS){
+                if (processListRef == null){
+                    continue;
+                }
+                Object processRecord = XposedHelpers.callMethod(processListRef,"getLRURecordForAppLOSP",thread);
+                if (!isSystemProcessRecord(processRecord)){
+                    return false;
+                }
+            }
+        }catch (Exception e){
+            LoggerLog(e);
+        }
+        return true;
+    }
+
     @ParametersAreNonnullByDefault
     record HookRecord(int hookClassIdentityHash,String methodName,int objectIdentityHash,int sysAppCheckerIdentityHash){
         HookRecord(Class<?> hookClass, String methodName, Object object,SystemAppChecker systemAppChecker){
@@ -585,7 +630,7 @@ public class ReturnIfNonSys {
      * <p>SimpleExecutor deals with the next step</p>
      * <p>the mode of {@link SimpleExecutorWithMode} decides when will it be executed(before/after/both of the method executed)</p>
      * <p>if a return value is inserted,it will be considered as a SimpleExecutor only sets the result(param.setResult(obj))</p>
-     * <p>if a {@link SimpleExecutor} is put in,it will be considered as {@link SimpleExecutorWithMode}({@link com.linearity.utils.SimpleExecutor.MODE_BEFORE},SimpleExecutor)</p>
+     * <p>if a {@link SimpleExecutor} is put in,it will be considered as {@link SimpleExecutorWithMode}({@link com.linearity.utils.SimpleExecutor#MODE_BEFORE},SimpleExecutor)</p>
      * @param hookClass the class to hook
      * @param methodName method to hook(won't hook super class)
      * @param object SimpleExecutorWithMode/SimpleExecutor/returnValue
@@ -603,14 +648,14 @@ public class ReturnIfNonSys {
             return unhooks;
         }
 
-        if (object instanceof SimpleExecutorWithMode){
-            Collection<XC_MethodHook.Unhook> unhookCollection = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode) object,systemAppChecker);
+        if (object instanceof SimpleExecutorWithMode simpleExecutorWithMode){
+            Collection<XC_MethodHook.Unhook> unhookCollection = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName, simpleExecutorWithMode,systemAppChecker);
             unhooks.addAll(unhookCollection);
             return unhooks;
         }
-        else if (object instanceof SimpleExecutor){
+        else if (object instanceof SimpleExecutor simpleExecutor){
             Collection<XC_MethodHook.Unhook> unhookCollection = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,
-                    new SimpleExecutorWithMode(MODE_BEFORE, (SimpleExecutor) object),
+                    new SimpleExecutorWithMode(MODE_BEFORE, simpleExecutor),
                     systemAppChecker);
             unhooks.addAll(unhookCollection);
             return unhooks;
@@ -631,22 +676,36 @@ public class ReturnIfNonSys {
         }
         List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
         if (object != null){
-            if (object instanceof XC_MethodHook){
-                Collection<XC_MethodHook.Unhook> unhook = XposedBridge.hookAllMethods(hookClass,methodName,(XC_MethodHook)object);
-                unhooks.addAll(unhook);
+            if (object instanceof XC_MethodHook methodHook){
+                Collection<XC_MethodHook.Unhook> unhook = null;
+                if (Objects.equals(CONSTRUCTOR_METHOD_STRING,methodName)){
+                    unhook = XposedBridge.hookAllConstructors(hookClass,methodHook);
+                }else {
+                    XposedBridge.hookAllMethods(hookClass,methodName,methodHook);
+                }
+                if (unhook != null) {
+                    unhooks.addAll(unhook);
+                }
                 return unhooks;
             }
-            if (object instanceof SimpleExecutorWithMode){
-                Collection<XC_MethodHook.Unhook> unhook = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName,(SimpleExecutorWithMode)object,systemAppChecker);
+            if (object instanceof SimpleExecutorWithMode simpleExecutorWithMode){
+                Collection<XC_MethodHook.Unhook> unhook = hookAllMethodsWithCache_executeIfNonSys(hookClass,methodName, simpleExecutorWithMode,systemAppChecker);
                 unhooks.addAll(unhook);
                 return unhooks;
             }
         }
-        for (Method m:hookClass.getDeclaredMethods()){
-            if (!resolveMethodName(m.getName()).equals(methodName)){continue;}
+        if (Objects.equals(CONSTRUCTOR_METHOD_STRING,methodName)){
+            unhooks.addAll(XposedBridge.hookAllConstructors(hookClass,objectIfNonSys(null, systemAppChecker)));
+        }
+        else {
+            for (Method m : hookClass.getDeclaredMethods()) {
+                if (!resolveMethodName(m.getName()).equals(methodName)) {
+                    continue;
+                }
 
-            XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,objectIfNonSys(object,systemAppChecker));
-            unhooks.add(unhook);
+                XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m, objectIfNonSys(object, systemAppChecker));
+                unhooks.add(unhook);
+            }
         }
         return unhooks;
     }
@@ -660,12 +719,17 @@ public class ReturnIfNonSys {
             return Collections.emptyList();
         }
         List<XC_MethodHook.Unhook> unhooks = new ArrayList<>();
-        for (Method m:hookClass.getDeclaredMethods()){
-            if (Objects.equals(resolveMethodName(m.getName()),methodName)){
-                XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,simpleExecutorWithoutAttrSource(simpleExecutorWithMode,systemAppChecker));
-                unhooks.add(unhook);
+        if (Objects.equals(CONSTRUCTOR_METHOD_STRING,methodName)){
+            unhooks.addAll(XposedBridge.hookAllConstructors(hookClass,simpleExecutorWithoutAttrSource(simpleExecutorWithMode,systemAppChecker)));
+        }else {
+            for (Method m:hookClass.getDeclaredMethods()){
+                if (Objects.equals(resolveMethodName(m.getName()),methodName)){
+                    XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(m,simpleExecutorWithoutAttrSource(simpleExecutorWithMode,systemAppChecker));
+                    unhooks.add(unhook);
+                }
             }
         }
+
         return unhooks;
     }
     public static final class SyntheticNameResolver {
@@ -781,17 +845,27 @@ public class ReturnIfNonSys {
             if (arg == null) {
                 continue;
             }
-            if (arg.getClass().isAssignableFrom(toFind)) {
+            if (toFind.isAssignableFrom(arg.getClass())) {
                 return (T) arg;
             }else if (isInterface){
                 for (Class<?> iface:arg.getClass().getInterfaces()){
-                    if (iface.isAssignableFrom(toFind)){
+                    if (toFind.isAssignableFrom(iface)){
                         return (T) arg;
                     }
                 }
             }
         }
         return null;
+    }
+
+    public static <T> List<T> findArgsByClassInArgs(Object[] args, Class<T> toFind) {
+        List<T> results = new ArrayList<>();
+        for (Object arg : args) {
+            if (arg != null && toFind.isAssignableFrom(arg.getClass())) {
+                results.add((T) arg);
+            }
+        }
+        return results;
     }
 
     public static int findClassIndexInArgs(Object[] args,Class<?> toFind){

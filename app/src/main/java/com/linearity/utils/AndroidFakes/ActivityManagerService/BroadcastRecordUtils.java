@@ -1,7 +1,7 @@
 package com.linearity.utils.AndroidFakes.ActivityManagerService;
 
 import static com.linearity.utils.AndroidFakes.ActivityManagerService.ProcessRecordUtils.initProcessRecordUtils;
-import static com.linearity.utils.AndroidFakes.ActivityManagerService.ProcessRecordUtils.isSystemProcessRecord;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.isSystemProcessRecord;
 import static com.linearity.utils.AndroidFakes.ActivityManagerService.ProcessRecordUtils.processRecordToString;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 
