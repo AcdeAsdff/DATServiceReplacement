@@ -19,7 +19,7 @@ public class HookSystemUIApplication {
 
     private static void hookSystemUIApplication(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"onCreate",new SimpleExecutorWithMode(MODE_AFTER,param -> {
-            showAfter.simpleExecutor.execute(param);
+//            showAfter.simpleExecutor.execute(param);
             for (String className:classesAndHooks.keys()){
                 if (!className.startsWith("com.android.systemui")){
                     continue;

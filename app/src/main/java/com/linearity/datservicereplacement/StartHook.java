@@ -186,7 +186,6 @@ public class StartHook implements IXposedHookLoadPackage {
         for (String pkgName:new String[]{
                 "com.github.kr328.clash",
                 "com.v2ray.ang",
-                "com.v2ray.ang",
                 "info.zamojski.soft.towercollector",
                 "me.bmax.apatch",
                 "top.niunaijun.blackdexa64",
@@ -622,6 +621,11 @@ public class StartHook implements IXposedHookLoadPackage {
             @Override
             public void run() {
                 super.run();
+                try {
+                    sleep(3000);
+                } catch (InterruptedException e) {
+                    LoggerLog(e);
+                }
                 try {
                     setOtherProperties();
                 }catch (Exception e){
