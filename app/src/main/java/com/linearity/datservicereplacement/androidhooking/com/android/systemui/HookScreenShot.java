@@ -94,7 +94,7 @@ public class HookScreenShot {
             }else if(param.args[i] != null){
                 Class<?> argClass = param.args[i].getClass();
                 callback = param.args[i];
-                if (reqCallbackClass != null && argClass.isAssignableFrom(reqCallbackClass)){
+                if (reqCallbackClass != null && reqCallbackClass.isAssignableFrom(argClass)){
                     if (hookReqCallbacks.contains(argClass)){
                         continue;
                     }

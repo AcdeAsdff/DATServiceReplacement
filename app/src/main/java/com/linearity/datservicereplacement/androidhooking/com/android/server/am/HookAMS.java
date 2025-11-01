@@ -46,6 +46,7 @@ public class HookAMS {
                 }
             } catch (ConcurrentModificationException c) {
                 unregister();//again!
+                return;
             }
         }
     }

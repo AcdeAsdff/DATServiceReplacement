@@ -193,7 +193,7 @@ public class PackageManagerUtils {
         if (SomeClasses.PackageStateInternalClass == null){
             isPackageStateInternalClass = obj.getClass().getName().contains("PackageStateInternal");
         }else {
-            isPackageStateInternalClass = obj.getClass().isAssignableFrom(SomeClasses.PackageStateInternalClass);
+            isPackageStateInternalClass = SomeClasses.PackageStateInternalClass.isAssignableFrom(obj.getClass());
         }
         if (isPackageStateInternalClass) {
 //            final PackageStateInternal ps = (PackageStateInternal) obj;
@@ -241,13 +241,13 @@ public class PackageManagerUtils {
         if (SomeClasses.SharedUserSettingClass == null){
             isSharedUserSettingClass = obj.getClass().getName().contains("SharedUserSetting");
         }else {
-            isSharedUserSettingClass = obj.getClass().isAssignableFrom(SomeClasses.SharedUserSettingClass);
+            isSharedUserSettingClass = SomeClasses.SharedUserSettingClass.isAssignableFrom(obj.getClass());
         }
         boolean isPackageSettingClass;
         if (SomeClasses.PackageSettingClass == null){
             isPackageSettingClass = obj.getClass().getName().contains("PackageSetting");
         }else {
-            isPackageSettingClass = obj.getClass().isAssignableFrom(SomeClasses.PackageSettingClass);
+            isPackageSettingClass = SomeClasses.PackageSettingClass.isAssignableFrom(obj.getClass());
         }
 
         if (isSharedUserSettingClass) {

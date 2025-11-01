@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public final class BluetoothUuid {
@@ -165,7 +166,7 @@ public final class BluetoothUuid {
             return uuidA.length == 0;
         }
 
-        HashSet<ParcelUuid> uuidSet = new HashSet<>(Arrays.asList(uuidA));
+        Set<ParcelUuid> uuidSet = Set.of(uuidA);
         for (ParcelUuid uuid : uuidB) {
             if (uuidSet.contains(uuid)) return true;
         }

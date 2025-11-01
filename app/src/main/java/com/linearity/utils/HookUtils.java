@@ -217,7 +217,7 @@ public class HookUtils {
         listenClass(selfClass, toAvoid,null);
     }
     public static void listenClass(@NotNull Class<?> selfClass, @NonNull Set<String> toAvoid,@Nullable XC_MethodHook callback){
-        if (selfClass.isAssignableFrom(android.os.BinderProxy.class)){
+        if (android.os.BinderProxy.class.isAssignableFrom(selfClass)){
             return;
         }
 //        if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}
@@ -237,7 +237,7 @@ public class HookUtils {
         listenClass(selfClass, Collections.emptySet());
     }
     public static void listenClassForNonSysUid(@NotNull Class<?> selfClass, @NonNull Set<String> toAvoid){
-        if (selfClass.isAssignableFrom(android.os.BinderProxy.class)){
+        if (android.os.BinderProxy.class.isAssignableFrom(selfClass)){
             return;
         }
 //        if (Modifier.isAbstract(selfClass.getModifiers()) || Modifier.isInterface(selfClass.getModifiers())){return;}

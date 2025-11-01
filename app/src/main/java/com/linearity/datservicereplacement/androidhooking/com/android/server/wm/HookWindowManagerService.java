@@ -49,6 +49,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -518,22 +519,20 @@ public class HookWindowManagerService {
         }
     }
 
-    private static Set<String> windowNamesToInvisible = new HashSet<>(Arrays.asList("StatusBar"));
+    private static Set<String> windowNamesToInvisible = new HashSet<>(List.of("StatusBar"));
     private static Set<String> windowNamesNotToShow = new HashSet<>(Arrays.asList(
-            new String[]{"InputMethod",
-                    "com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher",
-                    "ShellDropTarget",
-                    "NotificationShade",
-                    "NavigationBar0",
-                    "EdgeBackGestureHandler0",
-                    "ScreenDecorOverlay",
-                    "SecondaryHomeHandle0",
-                    "ScreenDecorOverlayBottom",
-                    "com.android.settings/com.android.settings.FallbackHome",
-                    "com.android.systemui.wallpapers.ImageWallpaper",
-                    "ActionsDialog",
-            }
-    ));
+            "InputMethod",
+            "com.android.launcher3/com.android.launcher3.uioverrides.QuickstepLauncher",
+            "ShellDropTarget",
+            "NotificationShade",
+            "NavigationBar0",
+            "EdgeBackGestureHandler0",
+            "ScreenDecorOverlay",
+            "SecondaryHomeHandle0",
+            "ScreenDecorOverlayBottom",
+            "com.android.settings/com.android.settings.FallbackHome",
+            "com.android.systemui.wallpapers.ImageWallpaper",
+            "ActionsDialog"));
     public static boolean decideWindowStateInvisible(@Nullable Object windowState){
         if (windowState == null){return false;}
 

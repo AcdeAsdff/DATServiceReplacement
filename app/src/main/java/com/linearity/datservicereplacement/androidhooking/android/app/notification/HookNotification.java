@@ -7,6 +7,7 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecke
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 
@@ -31,7 +32,7 @@ public class HookNotification {
     public static final NotificationManager.Policy policy = new NotificationManager.Policy((1<<9)-1,0,0);
     //TODO:Randomize if needed
 
-    public static final Set<Class<?>> INotificationManagerHookedPool = new HashSet<>();
+    public static final Set<Class<?>> INotificationManagerHookedPool = newWeakSet();
     public static void hookINotificationManager(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,INotificationManagerHookedPool)){return;}
         hookAllMethodsWithCache_Auto(hookClass,"cancelAllNotifications",null);
@@ -41,7 +42,7 @@ public class HookNotification {
         hookAllMethodsWithCache_Auto(hookClass,"cancelToast",null);
         hookAllMethodsWithCache_Auto(hookClass,"finishToken",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"enqueueNotificationWithTag",null);
-//        hookAllMethodsWithCache_Auto(hookClass,"cancelNotificationWithTag",null);
+        hookAllMethodsWithCache_Auto(hookClass,"cancelNotificationWithTag",null);
         hookAllMethodsWithCache_Auto(hookClass,"isInCall",true);
         hookAllMethodsWithCache_Auto(hookClass,"setShowBadge",null);
         hookAllMethodsWithCache_Auto(hookClass,"canShowBadge",true);
@@ -102,10 +103,10 @@ public class HookNotification {
         hookAllMethodsWithCache_Auto(hookClass,"getHistoricalNotifications",null,getSystemChecker_PackageNameAt(0));//StatusBarNotification[]
         hookAllMethodsWithCache_Auto(hookClass,"getHistoricalNotificationsWithAttribution",null,getSystemChecker_PackageNameAt(0));//StatusBarNotification[]
         hookAllMethodsWithCache_Auto(hookClass,"getNotificationHistory",null,getSystemChecker_PackageNameAt(0));//NotificationHistory
-//        hookAllMethodsWithCache_Auto(hookClass,"registerListener",null);
-//        hookAllMethodsWithCache_Auto(hookClass,"unregisterListener",null);
-//        hookAllMethodsWithCache_Auto(hookClass,"cancelNotificationFromListener",null);
-//        hookAllMethodsWithCache_Auto(hookClass,"cancelNotificationsFromListener",null);
+        hookAllMethodsWithCache_Auto(hookClass,"registerListener",null);
+        hookAllMethodsWithCache_Auto(hookClass,"unregisterListener",null);
+        hookAllMethodsWithCache_Auto(hookClass,"cancelNotificationFromListener",null);
+        hookAllMethodsWithCache_Auto(hookClass,"cancelNotificationsFromListener",null);
         hookAllMethodsWithCache_Auto(hookClass,"snoozeNotificationUntilContextFromListener",null);
         hookAllMethodsWithCache_Auto(hookClass,"snoozeNotificationUntilFromListener",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"requestBindListener",null);
@@ -188,8 +189,8 @@ public class HookNotification {
 //        hookAllMethodsWithCache_Auto(hookClass,"setListenerFilter",null);
         hookAllMethodsWithCache_Auto(hookClass,"migrateNotificationFilter",null);
         hookAllMethodsWithCache_Auto(hookClass,"setToastRateLimitingEnabled",null);
-//        hookAllMethodsWithCache_Auto(hookClass,"registerCallNotificationEventListener",null,getSystemChecker_PackageNameAt(0));
-//        hookAllMethodsWithCache_Auto(hookClass,"unregisterCallNotificationEventListener",null,getSystemChecker_PackageNameAt(0));
+        hookAllMethodsWithCache_Auto(hookClass,"registerCallNotificationEventListener",null,getSystemChecker_PackageNameAt(0));
+        hookAllMethodsWithCache_Auto(hookClass,"unregisterCallNotificationEventListener",null,getSystemChecker_PackageNameAt(0));
     }
 
 }

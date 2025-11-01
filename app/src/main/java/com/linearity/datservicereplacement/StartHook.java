@@ -53,6 +53,7 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.am.
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookProcessList;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.content.HookContentService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.job.HookJobSchedulerService;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.HookSELinuxMMAC;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.hookPackageManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.policy.keyguard.HookKeyGuard;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookClientLifecycleManager;
@@ -132,7 +133,10 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class StartHook implements IXposedHookLoadPackage {
     public static final String ORDERED_PHONE_NUMBER = "";
-    public static final Set<Class<?>> publicHookedPool = new HashSet<>();
+    public static <T> Set<T> newWeakSet(){
+        return Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
+    }
+    public static final Set<Class<?>> publicHookedPool = newWeakSet();
     //if no,register.
     public static boolean isPublicHookedPoolRegistered(Class<?> toCheck){
         if (publicHookedPool.contains(toCheck)) {
@@ -163,7 +167,9 @@ public class StartHook implements IXposedHookLoadPackage {
         pool.put(toCheck,true);
         return false;
     }
+    //TODO:Dynamic add packages and persists after reboot
     public static final Set<String> WHITELIST_PACKAGE_NAMES = new HashSet<>();
+    public static final Set<String> SELINUX_TRUST_AS_NORMAL_PACKAGE_NAMES = new HashSet<>();
     public static final Map<Integer,Map<String,Object>> settingsForUid = new HashMap<>();
 
     //Don't forget to add packages u want to tell real info!
@@ -177,32 +183,39 @@ public class StartHook implements IXposedHookLoadPackage {
         WHITELIST_PACKAGE_NAMES.add("com.google.android.googlequicksearchbox");
         WHITELIST_PACKAGE_NAMES.add("com.google.android.inputmethod.latin");
 
-        WHITELIST_PACKAGE_NAMES.add("com.github.kr328.clash");
-        WHITELIST_PACKAGE_NAMES.add("com.v2ray.ang");
-        WHITELIST_PACKAGE_NAMES.add("info.zamojski.soft.towercollector");
-        WHITELIST_PACKAGE_NAMES.add("me.bmax.apatch");
-        WHITELIST_PACKAGE_NAMES.add("top.niunaijun.blackdexa64");
-        WHITELIST_PACKAGE_NAMES.add("com.github.metacubex.clash.meta");
-        WHITELIST_PACKAGE_NAMES.add("io.wallpaperengine.weclient");
-        WHITELIST_PACKAGE_NAMES.add("io.github.qauxv");
-        WHITELIST_PACKAGE_NAMES.add("org.mozilla.firefox");
-        WHITELIST_PACKAGE_NAMES.add("com.lb.lwp_plus");
-        WHITELIST_PACKAGE_NAMES.add("com.emanuelef.remote_capture");
-        WHITELIST_PACKAGE_NAMES.add("com.pcapdroid.mltm");
-        WHITELIST_PACKAGE_NAMES.add("me.bingyue.IceCore");
-        WHITELIST_PACKAGE_NAMES.add("com.zcshou.gogogo");
+        for (String pkgName:new String[]{
+                "com.github.kr328.clash",
+                "com.v2ray.ang",
+                "com.v2ray.ang",
+                "info.zamojski.soft.towercollector",
+                "me.bmax.apatch",
+                "top.niunaijun.blackdexa64",
+                "com.github.metacubex.clash.meta",
+                "io.wallpaperengine.weclient",
+                "io.github.qauxv",
+                "org.mozilla.firefox",
+                "com.lb.lwp_plus",
+                "com.emanuelef.remote_capture",
+                "com.pcapdroid.mltm",
+                "me.bingyue.IceCore",
+                "com.zcshou.gogogo",
+                "com.zhufucdev.motion_emulator",
+                "com.zhufucdev.mock_location_plugin",
+                "com.zhufucdev.cp_plugin",
+                "com.zhufucdev.ws_plugin",
+                "jp.pxv.android",
+                "com.twitter.android",
+                "com.supercell.clashroyale",
+                "com.sega.ColorfulStage.en",
+                "com.sega.pjsekai",
+                "com.hermes.mk.asia.qooapp",
+                "com.drdisagree.colorblendr",
+                "com.prism.hider.tg.ninja"
+        }){
+            WHITELIST_PACKAGE_NAMES.add(pkgName);
+            SELINUX_TRUST_AS_NORMAL_PACKAGE_NAMES.add(pkgName);
+        }
 //        WHITELIST_PACKAGE_NAMES.add("com.lerist.fakelocation");
-        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.motion_emulator");
-        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.mock_location_plugin");
-        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.cp_plugin");
-        WHITELIST_PACKAGE_NAMES.add("com.zhufucdev.ws_plugin");
-        WHITELIST_PACKAGE_NAMES.add("jp.pxv.android");
-        WHITELIST_PACKAGE_NAMES.add("com.twitter.android");
-        WHITELIST_PACKAGE_NAMES.add("com.supercell.clashroyale");
-        WHITELIST_PACKAGE_NAMES.add("com.sega.ColorfulStage.en");
-        WHITELIST_PACKAGE_NAMES.add("com.sega.pjsekai");
-        WHITELIST_PACKAGE_NAMES.add("com.hermes.mk.asia.qooapp");
-        WHITELIST_PACKAGE_NAMES.add("com.drdisagree.colorblendr");
 //        WHITELIST_PACKAGE_NAMES.add("com.MobileTicket");
     }
 
@@ -271,122 +284,79 @@ public class StartHook implements IXposedHookLoadPackage {
     }
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
-        initLocations();
-        initCellTowers();
+        try {
+            initLocations();
+            initCellTowers();
 
-        if (!(Objects.equals(lpparam.processName,"android"))
-                && !(Objects.equals(lpparam.processName,"system"))//in fact they have no name
-                && lpparam.processName != null){mSystemReady = true;}
+            if (!(Objects.equals(lpparam.processName,"android"))
+                    && !(Objects.equals(lpparam.processName,"system"))//in fact they have no name
+                    && lpparam.processName != null){mSystemReady = true;}
 
-        if (lpparam.appInfo != null){
-            if ((lpparam.appInfo.uid == 1000) && Objects.equals(null,lpparam.processName)){
-                LoggerLog("loading lib"+DATZYGISK_LOCAL_PART+" for:null|" + lpparam.packageName);
-                loadLibraryByPath(DATZYGISK_LOCAL_PART,null);
+            if (lpparam.appInfo != null){
+                if ((lpparam.appInfo.uid == 1000) && Objects.equals(null,lpparam.processName)){
+                    LoggerLog("loading lib"+DATZYGISK_LOCAL_PART+" for:null|" + lpparam.packageName);
+                    loadLibraryByPath(DATZYGISK_LOCAL_PART,null);
+                }
             }
-        }
-        if (libExists(DATZYGISK_LOCAL_PART)){
-            hookLocation = true;
-        }
-        //try to get some classes.
-        {
-            ClassLoader classLoader = lpparam.classLoader;
-            PackageStateInternalClass = XposedHelpers.findClassIfExists("com.android.server.pm.PackageSetting", classLoader);
-            SharedUserSettingClass = XposedHelpers.findClassIfExists("com.android.server.pm.SharedUserSetting", classLoader);
-            PackageSettingClass = XposedHelpers.findClassIfExists("com.android.server.pm.PackageSetting", classLoader);
-            WatchedSparseIntArrayClass = XposedHelpers.findClassIfExists("com.android.server.utils.WatchedSparseIntArray", classLoader);
-            if (WatchedSparseIntArrayClass != null){
-                ComputerEngineSettings_getIsolatedOwner = XposedHelpers.findMethodExactIfExists("com.android.server.pm.ComputerEngine$Settings",lpparam.classLoader,"getIsolatedOwner", WatchedSparseIntArrayClass,int.class);
+            if (libExists(DATZYGISK_LOCAL_PART)){
+                hookLocation = true;
             }
-            ComputerEngineClass = XposedHelpers.findClassIfExists("com.android.server.pm.ComputerEngine", classLoader);
-            UnsafeClass = XposedHelpers.findClassIfExists("sun.misc.Unsafe", classLoader);
-            if (UnsafeClass != null){
-                CanUseUnsafe = true;
-            }
-            if (ComputerEngineClass != null){
-                XposedBridge.hookAllConstructors(ComputerEngineClass, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        Computers.add(param.thisObject);
-                    }
-                });
-                ComputerEngine_isKnownIsolatedComputeApp = XposedHelpers.findMethodExactIfExists(ComputerEngineClass,
-                        "isKnownIsolatedComputeApp",
-                        int.class);
-                ComputerEngine_resolveInternalPackageNameInternalLocked = XposedHelpers.findMethodExact(ComputerEngineClass,
-                        "resolveInternalPackageNameInternalLocked",
-                        String.class,long.class,int.class);
-            }
-            WatchedArrayMapClass = XposedHelpers.findClassIfExists("com.android.server.utils.WatchedArrayMap", classLoader);
-            msgSamplingCOnfigClass = XposedHelpers.findClassIfExists("com.android.internal.app.MessageSamplingConfig", classLoader);
-        }
-
-        Class<?> hookClass;
-
-        if (WatchedArrayMapClass != null){
-            EMPTY_WATCHED_ARRAYMAP = XposedHelpers.newInstance(WatchedArrayMapClass);
-        }
-//        //but these affects showing :(
-//        hookClass = XposedHelpers.findClassIfExists("com.android.server.wm.ClientLifecycleManager", classLoader);
-//        if (hookClass != null){
-//            try {
-//                Class<?> transactionClass = XposedHelpers.findClass("android.app.servertransaction.ClientTransaction", classLoader);
-//                XposedHelpers.findAndHookMethod(hookClass, "scheduleTransaction", transactionClass, new XC_MethodHook() {
-//                    @Override
-//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//                        super.beforeHookedMethod(param);
-//                        try{
-//                            Object mLifecycleStateRequest = XposedHelpers.getObjectField(param.args[0],"mLifecycleStateRequest");
-//                            if (mLifecycleStateRequest == null){return;}
-//                            String className = mLifecycleStateRequest.getClass().getName();
-//                            if (className.contains("ResumeActivityItem") || className.contains("PauseActivityItem")){
-//
-//                            }
-//                        }catch (Exception e){
-//                            LoggerLog(e);
-//                        }
-//                    }
-//                });
-//            }catch (Exception e){
-//                LoggerLog(e);
-//            }
-//        }
-
-//        hookClass = XposedHelpers.findClassIfExists("android.app.ActivityThread", classLoader);
-//        if (hookClass != null){
-//            XposedBridge.hookAllMethods(hookClass, "performResumeActivity", new XC_MethodHook() {
-//                @Override
-//                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//                    super.beforeHookedMethod(param);
-//                    try {
-//                        Object mActivityClientRecord = param.args[0];
-//                        /*LoadedApk*/Object packageInfo = XposedHelpers.getObjectField(mActivityClientRecord,"packageInfo");
-//                        String mPackageName = (String) XposedHelpers.getObjectField(packageInfo,"mPackageName");
-//                        LoggerLog(mPackageName + " | onResume");
-//                    }catch (Exception e){
-//                        LoggerLog(e);
-//                    }
-//                }
-//            });
-//        }
-
-
-        if (false){
-            //when i have no idea what to do,show all transact
-            hookClass = XposedHelpers.findClassIfExists("android.os.Binder", lpparam.classLoader);
-            if (hookClass != null) {
-                XposedBridge.hookAllMethods(hookClass, "execTransact", new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        if (!isSystemApp(Binder.getCallingUid())){
-                            LoggerLog(new Exception(
-                                    Arrays.deepToString(param.args)
-                                    + "\n" + Binder.getCallingUid()
-                                    + "\n" + getPackageName(Binder.getCallingUid())
-                                    + "\n" + param.thisObject.toString()
-                            ));
+            //try to get some classes.
+            {
+                ClassLoader classLoader = lpparam.classLoader;
+                PackageStateInternalClass = XposedHelpers.findClassIfExists("com.android.server.pm.PackageSetting", classLoader);
+                SharedUserSettingClass = XposedHelpers.findClassIfExists("com.android.server.pm.SharedUserSetting", classLoader);
+                PackageSettingClass = XposedHelpers.findClassIfExists("com.android.server.pm.PackageSetting", classLoader);
+                WatchedSparseIntArrayClass = XposedHelpers.findClassIfExists("com.android.server.utils.WatchedSparseIntArray", classLoader);
+                if (WatchedSparseIntArrayClass != null){
+                    ComputerEngineSettings_getIsolatedOwner = XposedHelpers.findMethodExactIfExists("com.android.server.pm.ComputerEngine$Settings",lpparam.classLoader,"getIsolatedOwner", WatchedSparseIntArrayClass,int.class);
+                }
+                ComputerEngineClass = XposedHelpers.findClassIfExists("com.android.server.pm.ComputerEngine", classLoader);
+                UnsafeClass = XposedHelpers.findClassIfExists("sun.misc.Unsafe", classLoader);
+                if (UnsafeClass != null){
+                    CanUseUnsafe = true;
+                }
+                if (ComputerEngineClass != null){
+                    XposedBridge.hookAllConstructors(ComputerEngineClass, new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            super.beforeHookedMethod(param);
+                            Computers.add(param.thisObject);
                         }
+                    });
+                    ComputerEngine_isKnownIsolatedComputeApp = XposedHelpers.findMethodExactIfExists(ComputerEngineClass,
+                            "isKnownIsolatedComputeApp",
+                            int.class);
+                    ComputerEngine_resolveInternalPackageNameInternalLocked = XposedHelpers.findMethodExact(ComputerEngineClass,
+                            "resolveInternalPackageNameInternalLocked",
+                            String.class,long.class,int.class);
+                }
+                WatchedArrayMapClass = XposedHelpers.findClassIfExists("com.android.server.utils.WatchedArrayMap", classLoader);
+                msgSamplingCOnfigClass = XposedHelpers.findClassIfExists("com.android.internal.app.MessageSamplingConfig", classLoader);
+            }
+
+            Class<?> hookClass;
+
+            if (WatchedArrayMapClass != null){
+                EMPTY_WATCHED_ARRAYMAP = XposedHelpers.newInstance(WatchedArrayMapClass);
+            }
+
+            if (false){
+                //when i have no idea what to do,show all transact
+                hookClass = XposedHelpers.findClassIfExists("android.os.Binder", lpparam.classLoader);
+                if (hookClass != null) {
+                    XposedBridge.hookAllMethods(hookClass, "execTransact", new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            super.beforeHookedMethod(param);
+                            if (!isSystemApp(Binder.getCallingUid())){
+                                LoggerLog(new Exception(
+                                        Arrays.deepToString(param.args)
+                                                + "\n" + Binder.getCallingUid()
+                                                + "\n" + getPackageName(Binder.getCallingUid())
+                                                + "\n" + param.thisObject.toString()
+                                ));
+                            }
 //                        if (!isSystemApp(Binder.getCallingUid())) {
 //                            String packageName = "";
 //                            if (param.thisObject.toString().startsWith("com.android.server.BluetoothManagerService")) {
@@ -399,121 +369,16 @@ public class StartHook implements IXposedHookLoadPackage {
 //                            }
 //                            LoggerLog(new Exception(param.thisObject.toString() + " " + param.args[0] + " " + param.args[1] + " " + param.args[2] + " " + param.args[3] + " " + packageName));
 //                        }
-                    }
-                });
+                        }
+                    });
+                }
             }
+            initHooks();
+            hookForClassLoader(XposedBridge.BOOTCLASSLOADER);
+            hookForClassLoader(lpparam.classLoader);
+        }catch (Exception e){
+            LoggerLog(e);
         }
-        initHooks();
-//        hookForClassLoader(XposedBridge.BOOTCLASSLOADER);
-        hookForClassLoader(lpparam.classLoader);
-
-
-//        hookClass = XposedHelpers.findClassIfExists("com.android.server.SystemServiceManager", classLoader);
-//        if (hookClass != null){
-//
-//            XposedBridge.hookAllMethods(hookClass, "startService", new XC_MethodHook() {
-//                @Override
-//                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                    super.afterHookedMethod(param);
-//                    if (param.args[0]==null){
-//                        LoggerLog("[linearity-startSystemService]","null");
-//                        return;
-//                    }
-//                    LoggerLog("[linearity-startSystemService]",param.args[0].toString());
-//                }
-//            });
-//
-//            XposedBridge.hookAllMethods(hookClass, "startOtherServices", new XC_MethodHook() {
-//                @Override
-//                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                    super.afterHookedMethod(param);
-//                    if (param.getThrowable() != null){
-//                        LoggerLog(param.getThrowable());
-//                    }
-//                }
-//            });
-//        }
-//        hookClass = XposedHelpers.findClassIfExists("com.android.server.TelephonyRegistry", classLoader);
-//        if (hookClass != null){
-//            XposedBridge.hookAllConstructors(hookClass, new XC_MethodHook() {
-//                @Override
-//                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                    super.afterHookedMethod(param);
-//                    Context mContext = (Context) param.args[0];
-//                    TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
-//                    LoggerLog(mContext + " | " + telephonyManager);
-//                }
-//            });
-//        }
-
-
-
-//        hookClass = XposedHelpers.findClassIfExists("android.app.ContextImpl", classLoader);
-//        if (hookClass != null){
-//            hookContextImpl(hookClass);
-//        }
-
-//        hookClass = XposedHelpers.findClassIfExists("com.android.server.am.ActiveServices", classLoader);
-//        if (hookClass != null){
-//            XposedBridge.hookAllMethods(hookClass, "startServiceLocked", new XC_MethodHook() {
-//                @Override
-//                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//                    super.beforeHookedMethod(param);
-//                    if (param.args[4] == null){return;}
-//                    if (!isSystemApp((int) param.args[4])){
-//                        StringBuilder sb = new StringBuilder();
-//                        for (Object o:param.args){
-//                            if (o != null){
-//                                sb.append(o.toString()).append("\n");
-//                            }else {
-//                                sb.append("null\n");
-//                            }
-//                        }
-//                        LoggerLog(sb.toString());
-//                    }
-//                }
-//            });
-//        }
-
-//        hookClass = XposedHelpers.findClassIfExists("com.android.server.wm.ActivityTaskManagerService", classLoader);
-//        if (hookClass != null){
-//            XposedBridge.hookAllMethods(hookClass, "startActivityAsUser", new XC_MethodHook() {
-//                @Override
-//                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-//                    super.beforeHookedMethod(param);
-//                    int userid = (int) param.args[11];
-//                    if (param.args[3] == null){return;}
-//                    Intent intent = (Intent) param.args[3];
-//                    if (intent != null){
-//                        String packageName;
-//                        LoggerLog(intent.toString());
-//                        if (intent.getPackage() != null){
-//                            packageName = intent.getPackage();
-//                        }else {
-//                            String[] splited = intent.toString().split("cmp=");
-//                            if (splited.length == 1){
-//                                return;
-//                            }
-//                            packageName = splited[1].split("/")[0];
-//                        }
-//                        if (packageName == null){
-//                            return;
-//                        }
-//                        if (!isSystemApp(packageName,userid)){
-//                            StringBuilder sb = new StringBuilder();
-//                            for (Object o:param.args){
-//                                if (o != null){
-//                                    sb.append(o.toString()).append("\n");
-//                                }else {
-//                                    sb.append("null\n");
-//                                }
-//                            }
-//                            LoggerLog(sb.toString());
-//                        }
-//                    }
-//                }
-//            });
-//        }
 
     }
     public static Multimap<String, ClassHookExecutor> classesAndHooks = Multimaps.synchronizedSetMultimap(HashMultimap.create());
@@ -530,6 +395,7 @@ public class StartHook implements IXposedHookLoadPackage {
 
         HookAMS.doHook();
         HookIPackageManager.doHook();
+        HookSELinuxMMAC.doHook();
         hookPackageManager.doHook();
         HookAppFilter.doHook();
         HookProcessList.doHook();
@@ -661,7 +527,7 @@ public class StartHook implements IXposedHookLoadPackage {
             usedExecutors_wrappedMap,
             ConcurrentHashMap::newKeySet
     );
-    public static final Set<Class<?>> hookedClassLoaderPool = new HashSet<>();
+    public static final Set<Class<?>> hookedClassLoaderPool = newWeakSet();
     static {
         hookedClassLoaderPool.add(XposedBridge.BOOTCLASSLOADER.getClass());
     }
@@ -752,11 +618,17 @@ public class StartHook implements IXposedHookLoadPackage {
     public static void callOnStarted(){
         if (calledOnStartedFlag){return;}
         calledOnStartedFlag = true;
-        try {
-            setOtherProperties();
-        }catch (Exception e){
-            LoggerLog(e);
-        }
+        new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    setOtherProperties();
+                }catch (Exception e){
+                    LoggerLog(e);
+                }
+            }
+        }.start();
 
     }
     private static final String[] constCommands = {

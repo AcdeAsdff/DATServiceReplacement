@@ -580,6 +580,9 @@ public class ReturnIfNonSys {
                     continue;
                 }
                 Object processRecord = XposedHelpers.callMethod(processListRef,"getLRURecordForAppLOSP",thread);
+                if (processRecord == null){
+                    continue;
+                }
                 if (!isSystemProcessRecord(processRecord)){
                     return false;
                 }
@@ -588,6 +591,27 @@ public class ReturnIfNonSys {
             LoggerLog(e);
         }
         return true;
+    }
+
+    public static int uidOfIApplicationThread(IApplicationThread thread){
+        try {
+            for (Object processListRef: ProcessListUtils.ALL_PROCESS_LISTS){
+                if (processListRef == null){
+                    continue;
+                }
+                Object processRecord = XposedHelpers.callMethod(processListRef,"getLRURecordForAppLOSP",thread);
+                int uid = uidOfProcessRecord(processRecord);
+                if (!(uid==Integer.MIN_VALUE)){
+                    return uid;
+                }
+            }
+        }catch (Exception e){
+            LoggerLog(e);
+        }
+        return Integer.MIN_VALUE;
+    }
+    public static int uidOfProcessRecord(Object /*ProcessRecord*/ processRecord){
+        return ProcessRecordUtils.outputInformation(processRecord).uid;
     }
 
     @ParametersAreNonnullByDefault
@@ -872,7 +896,7 @@ public class ReturnIfNonSys {
         boolean isInterface = toFind.isInterface();
         for (int i = 0; i < args.length; i++) {
             if (args[i] == null){continue;}
-            if (args[i].getClass().isAssignableFrom(toFind)){
+            if (toFind.isAssignableFrom(args[i].getClass())){
                 return i;
             }else if (isInterface){
                 for (Class<?> iface:args[i].getClass().getInterfaces()){

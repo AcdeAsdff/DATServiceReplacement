@@ -1,6 +1,7 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.location;
 
 import static android.telephony.CellInfo.CONNECTION_PRIMARY_SERVING;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.getLocationByCurrentTimestamp;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.getLocationResultByCurrentTimestamp;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.getLocationsByCurrentTimestamp;
@@ -204,7 +205,7 @@ public class HookLocationManager {
             param.args[0] = getLocationsByCurrentTimestamp();
         },noSystemChecker);
     }
-//    public static Set<Class<?>> ILocationManagersHooked = new HashSet<>();
+//    public static Set<Class<?>> ILocationManagersHooked = newWeakSet();
     public static void hookLocationManagerService(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"addLocationProviderManager",showBefore,noSystemChecker);
     }
@@ -683,7 +684,7 @@ public class HookLocationManager {
         });
     }
 
-    public static final Set<Class<?>> listenedLocationRelatedClass = new HashSet<>();
+    public static final Set<Class<?>> listenedLocationRelatedClass = newWeakSet();
     private static final XC_MethodHook resultLocationListenerForCollection = new XC_MethodHook() {
         @Override
         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -730,11 +731,11 @@ public class HookLocationManager {
                 List<Integer> locationResultIndexes = new ArrayList<>();
                 List<Integer> ListIndexes = new ArrayList<>();
                 for (Class<?> c:m.getParameterTypes()){
-                    if (c.isAssignableFrom(Location.class)){
+                    if (Location.class.isAssignableFrom(c)){
                         locationIndexes.add(currentIndex);
-                    }else if (c.isAssignableFrom(LocationResult.class)){
+                    }else if (LocationResult.class.isAssignableFrom(c)){
                         locationResultIndexes.add(currentIndex);
-                    }else if (c.isAssignableFrom(List.class)){
+                    }else if (List.class.isAssignableFrom(c)){
                         ListIndexes.add(currentIndex);
                     }
                     currentIndex += 1;

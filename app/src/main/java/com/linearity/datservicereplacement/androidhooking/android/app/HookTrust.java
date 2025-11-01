@@ -2,6 +2,7 @@ package com.linearity.datservicereplacement.androidhooking.android.app;
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 
@@ -18,7 +19,7 @@ public class HookTrust {
             return null;
         });
     }
-    public static final Set<Class<?>> ITrustManagerHookedPool = new HashSet<>();
+    public static final Set<Class<?>> ITrustManagerHookedPool = newWeakSet();
     public static void hookITrustManager(Class<?> hookClass){
         if(isHookedPoolRegistered(hookClass,ITrustManagerHookedPool)){return;}
         hookAllMethodsWithCache_Auto(hookClass,"reportUnlockAttempt",null);

@@ -1,6 +1,7 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.pm;
 
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
@@ -43,7 +44,7 @@ import de.robv.android.xposed.XposedHelpers;
 public class hookPackageManager {
 
 
-    private static final Set<Class<?>> hooked = new HashSet<>();
+    private static final Set<Class<?>> hooked = newWeakSet();
     public static final Map<String,PackageInfo> nonSysPackagesByName = new ConcurrentHashMap<>();
     public static final Map<String,PackageInfo> sysPackagesByName = new ConcurrentHashMap<>();
     public static void doHook(){
@@ -134,12 +135,14 @@ public class hookPackageManager {
         }
     }
 
-    public static final Set<String> bannedAccessingStringInPackageName = new HashSet<>();
-    static {
-        bannedAccessingStringInPackageName.add("lsposed");
-        bannedAccessingStringInPackageName.add("lineage");
-        bannedAccessingStringInPackageName.add("com.linearity");
-    }
+    public static final Set<String> bannedAccessingStringInPackageName = Set.of(
+            "lsposed","lineage","com.linearity"
+    );
+//    static {
+//        bannedAccessingStringInPackageName.add("lsposed");
+//        bannedAccessingStringInPackageName.add("lineage");
+//        bannedAccessingStringInPackageName.add("com.linearity");
+//    }
     /**
      when return true:do not show
      */

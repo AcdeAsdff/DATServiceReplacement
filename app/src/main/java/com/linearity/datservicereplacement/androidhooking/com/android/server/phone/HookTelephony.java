@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.phone;
 
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.currentSignalStrength;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.updateAllCellInfo;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.updateCellInfo;
@@ -72,7 +73,7 @@ public class HookTelephony {
     }
 
 
-    public static Set<Class<?>> alreadyHookedClass_ITelephony = new HashSet<>();
+    public static Set<Class<?>> alreadyHookedClass_ITelephony = newWeakSet();
 
     @NotFinished
     public static void hookITelephony(Class<?> hookClass){

@@ -7,11 +7,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class UriUtils {
-    private static final Set<String> SYSTEM_SCHEMES = new HashSet<>(Arrays.asList(
+    private static final Set<String> SYSTEM_SCHEMES = Set.of(
             "content", "file", "android.resource", "data", "package", "market",
             "http", "https", "mailto", "tel", "sms", "smsto", "mms", "mmsto",
             "geo", "ftp", "intent", "settings", "about", "chrome", "android-app"
-    ));
+    );
 
     public static boolean isUriSystem(Uri uri){
         String scheme = uri.normalizeScheme().getScheme();

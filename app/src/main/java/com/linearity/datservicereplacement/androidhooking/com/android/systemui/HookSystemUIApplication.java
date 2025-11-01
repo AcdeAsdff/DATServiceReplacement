@@ -26,11 +26,11 @@ public class HookSystemUIApplication {
                 }
                 try {
                     Class<?> cls = hookClass.getClassLoader().loadClass(className);
-                    if (cls != null){
-                        LoggerLog(new Exception("found:com.android.systemui.statusbar.window.StatusBarWindowView"));
-                    }else {
-                        LoggerLog(new Exception("not found:com.android.systemui.statusbar.window.StatusBarWindowView"));
-                    }
+//                    if (cls != null){
+//                        LoggerLog(new Exception("found:com.android.systemui.statusbar.window.StatusBarWindowView"));
+//                    }else {
+//                        LoggerLog(new Exception("not found:com.android.systemui.statusbar.window.StatusBarWindowView"));
+//                    }
                 }catch (ClassNotFoundException clsNotFound){
                     //pass
                 }

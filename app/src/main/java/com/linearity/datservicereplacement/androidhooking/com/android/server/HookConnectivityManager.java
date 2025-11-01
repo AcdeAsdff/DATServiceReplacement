@@ -8,6 +8,7 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
 import static com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils.FAKE_NETWORK_INFO_ARR;
 import static com.linearity.utils.AndroidFakes.Connectivity.NetworkConstructUtils.returnNetworkArrayByCallingUID;
@@ -88,7 +89,7 @@ public class HookConnectivityManager {
     }
 
 
-    public static final Set<Class<?>> IConnectivityManagerHookedPool = new HashSet<>();
+    public static final Set<Class<?>> IConnectivityManagerHookedPool = newWeakSet();
 
     private static void modifyNetworkInfo(@NonNull NetworkInfo info){
         if (info.toString().toLowerCase().contains("vpn")){
@@ -177,8 +178,8 @@ public class HookConnectivityManager {
 //        hookAllMethodsWithCache_Auto(hookClass,"requestNetwork",null,getSystemChecker_PackageNameAt(8));
 //        hookAllMethodsWithCache_Auto(hookClass,"pendingRequestForNetwork",null,getSystemChecker_PackageNameAt(2));
 //        hookAllMethodsWithCache_Auto(hookClass,"releasePendingNetworkRequest",null);
-        hookAllMethodsWithCache_Auto(hookClass,"listenForNetwork",null,getSystemChecker_PackageNameAt(-2));
-        hookAllMethodsWithCache_Auto(hookClass,"pendingListenForNetwork",null,getSystemChecker_PackageNameAt(-2));
+//        hookAllMethodsWithCache_Auto(hookClass,"listenForNetwork",null,getSystemChecker_PackageNameAt(-2));#idlefish using,crush if return null
+//        hookAllMethodsWithCache_Auto(hookClass,"pendingListenForNetwork",null,getSystemChecker_PackageNameAt(-2));#idlefish using,crush if return null
 //        hookAllMethodsWithCache_Auto(hookClass,"releaseNetworkRequest",null);
         hookAllMethodsWithCache_Auto(hookClass,"setAcceptUnvalidated",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"setAcceptPartialConnectivity",null);

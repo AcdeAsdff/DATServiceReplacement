@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.bluetooth;
 
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.utils.AndroidFakes.Bluetooth.BLEMethodHookRegistration.doRegister;
 import static com.linearity.utils.AndroidFakes.Bluetooth.BLEMethodHookRegistration.doStartScan;
 import static com.linearity.utils.AndroidFakes.Bluetooth.BLEMethodHookRegistration.doStopScan;
@@ -136,7 +137,7 @@ public class HookBluetooth {
         );
     }
 
-    public static final Set<Class<?>> IBluetoothManagerHookedPool = new HashSet<>();
+    public static final Set<Class<?>> IBluetoothManagerHookedPool = newWeakSet();
     public static void hookIBluetoothManager(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,IBluetoothManagerHookedPool)){return;}
         hookAllMethodsWithCache_Auto(hookClass,"registerAdapter",(SimpleExecutor)param -> {
@@ -167,7 +168,7 @@ public class HookBluetooth {
     }
 
     public static final long[] DISCOVERY_END_MILLS = new long[]{60000,30000,15000};
-    public static final Set<Class<?>> IBluetoothHookedPool = new HashSet<>();
+    public static final Set<Class<?>> IBluetoothHookedPool = newWeakSet();
     public static void hookIBluetooth(Class<?> hookClass){
         if(isHookedPoolRegistered(hookClass,IBluetoothHookedPool)){return;}
         {
@@ -294,7 +295,7 @@ public class HookBluetooth {
         }
     }
 
-    public static final Set<Class<?>> IBluetoothGattHookedPool = new HashSet<>();
+    public static final Set<Class<?>> IBluetoothGattHookedPool = newWeakSet();
     public static void hookIBluetoothGatt(Class<?> hookClass){
         if(isHookedPoolRegistered(hookClass,IBluetoothGattHookedPool)){return;}
         {

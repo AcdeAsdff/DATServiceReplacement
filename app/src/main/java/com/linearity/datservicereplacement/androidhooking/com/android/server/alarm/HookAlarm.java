@@ -3,6 +3,7 @@ package com.linearity.datservicereplacement.androidhooking.com.android.server.al
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 
@@ -34,7 +35,7 @@ public class HookAlarm {
     public static void hookIAlarmListener(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"doAlarm",null);
     }
-    public static final Set<Class<?>> IAlarmManagerHookedPool = new HashSet<>();
+    public static final Set<Class<?>> IAlarmManagerHookedPool = newWeakSet();
     //TODO:Randomize
     public static void hookIAlarmManager(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,IAlarmManagerHookedPool)){return;}

@@ -3,6 +3,7 @@ package com.linearity.datservicereplacement.androidhooking.com.android.server.po
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isHookedPoolRegistered;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
 
 import android.content.Context;
@@ -69,7 +70,7 @@ public class HookKeyGuard {
     public static void hookIDeviceLockedStateListener(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"onDeviceLockedStateChanged",null);
     }
-    public static final Set<Class<?>> IKeyguardServiceHookedPool = new HashSet<>();
+    public static final Set<Class<?>> IKeyguardServiceHookedPool = newWeakSet();
     public static void hookIKeyguardService(Class<?> hookClass){
         if (isHookedPoolRegistered(hookClass,IKeyguardServiceHookedPool)){return;}
         hookAllMethodsWithCache_Auto(hookClass,"setOccluded",null);

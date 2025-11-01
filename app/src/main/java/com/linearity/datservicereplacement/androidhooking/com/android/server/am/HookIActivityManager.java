@@ -46,6 +46,7 @@ import androidx.annotation.NonNull;
 
 import com.linearity.utils.AndroidFakes.ActivityManagerService.BroadcastRecordUtils;
 import com.linearity.utils.AndroidFakes.ActivityManagerService.Consts;
+import com.linearity.utils.NotFinished;
 import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 import com.linearity.utils.SystemAppChecker;
@@ -925,6 +926,7 @@ public class HookIActivityManager {
         }
         return modifyConfigurationInternal(toModify);
     }
+    @NotFinished
     public static Configuration modifyConfigurationWithUid(Configuration toModify,int uid){
         if (toModify == null){return null;}
         Configuration configuration = modifyConfigurationInternal(toModify);
@@ -939,6 +941,7 @@ public class HookIActivityManager {
 
         return configuration;
     }
+    @NotFinished
     public static Configuration modifyConfigurationInternal(Configuration toModify){
         if (toModify == null){return null;}
         Configuration configuration = new Configuration(toModify);
@@ -949,15 +952,15 @@ public class HookIActivityManager {
 
         return configuration;
     }
+    @NotFinished
     public static WindowConfiguration modifyWindowConfiguration(WindowConfiguration toModify){
         if (toModify == null){return null;}
-        WindowConfiguration windowConfiguration = new WindowConfiguration(toModify);
-        windowConfiguration.setActivityType(ACTIVITY_TYPE_STANDARD);
-//        windowConfiguration.setDisplayWindowingMode(WINDOWING_MODE_FULLSCREEN);
-//        windowConfiguration.setRotation(0);
-//        windowConfiguration.setDisplayRotation(0);
-//        windowConfiguration.setWindowingMode(WINDOWING_MODE_FULLSCREEN);
-        return windowConfiguration;
+        toModify.setActivityType(ACTIVITY_TYPE_STANDARD);
+        toModify.setDisplayWindowingMode(WINDOWING_MODE_FULLSCREEN);
+//        toModify.setRotation(0);
+//        toModify.setDisplayRotation(0);
+        toModify.setWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        return toModify;
     }
     public static final SimpleExecutor modifyConfigurationExecutor = param -> {
         Pair<Integer, Configuration> configurationPair = findClassIndexAndObjectInArgs(param.args, Configuration.class);

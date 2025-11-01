@@ -67,7 +67,7 @@ public class ProcessRecordUtils {
     }
 
     public static class ProcessRecordInformation{
-        public int uid = -1;
+        public int uid = Integer.MIN_VALUE;
         public ApplicationInfo appInfo = null;
 
     }

@@ -1,5 +1,6 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.wm;
 
+import static android.app.WaitResult.LAUNCH_STATE_COLD;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_UidAt;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager.modifyConfigurationExecutor;
@@ -19,6 +20,7 @@ import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.UriUtils.isUriSystem;
 
 import android.app.AndroidAppHelper;
+import android.app.WaitResult;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -42,13 +44,14 @@ import de.robv.android.xposed.XposedHelpers;
 
 public class HookIActivityTaskManager {
 
+    private static final boolean showStartActivityAllowedAndDisallowed = false;
     public static void doHook(){
         classesAndHooks.put("com.android.server.wm.ActivityTaskManagerService", HookIActivityTaskManager::hookIActivityTaskManager);
     }
 
     /**
      *
-     * @param i
+     * @param i intent to check
      * @return true if should disallow this
      */
     public static boolean startActivityIntentFilter(Intent i){
@@ -91,30 +94,46 @@ public class HookIActivityTaskManager {
         Intent intent = findArgByClassInArgs(param.args,Intent.class);
         if (startActivityIntentFilter(intent)){
             param.setResult(true);
-            LoggerLog(new Exception("startActivity_disallowed:"+ Arrays.deepToString(param.args)));
+            if (showStartActivityAllowedAndDisallowed){
+                LoggerLog(new Exception("startActivity_disallowed:" + Arrays.deepToString(param.args)));
+            }
             return;
         }
-        LoggerLog(new Exception("startActivity_allowed:"+ Arrays.deepToString(param.args)));
+        if (!isStartActivityInPackage(intent,getPackageName(Binder.getCallingUid()))){
+            if (showStartActivityAllowedAndDisallowed){
+                LoggerLog(new Exception("startActivity_allowed:" + Arrays.deepToString(param.args)));
+            }
+        }
     };
     public static final SimpleExecutor startActivityReturnInt = param -> {
         Intent intent = findArgByClassInArgs(param.args,Intent.class);
         if (startActivityIntentFilter(intent)){
             param.setResult(0);
-            LoggerLog(new Exception("startActivity_disallowed:"+ Arrays.deepToString(param.args)));
+            if (showStartActivityAllowedAndDisallowed){
+                LoggerLog(new Exception("startActivity_disallowed:" + Arrays.deepToString(param.args)));
+            }
             return;
         }
         if (!isStartActivityInPackage(intent,getPackageName(Binder.getCallingUid()))){
-            LoggerLog(new Exception("startActivity_allowed:" + Arrays.deepToString(param.args)));
+            if (showStartActivityAllowedAndDisallowed){
+                LoggerLog(new Exception("startActivity_allowed:" + Arrays.deepToString(param.args)));
+            }
         }
     };
     public static final SimpleExecutor startActivityReturnNull = param -> {
         Intent intent = findArgByClassInArgs(param.args,Intent.class);
         if (startActivityIntentFilter(intent)){
             param.setResult(null);
-            LoggerLog(new Exception("startActivity_disallowed:"+ Arrays.deepToString(param.args)));
+            if (showStartActivityAllowedAndDisallowed){
+                LoggerLog(new Exception("startActivity_disallowed:" + Arrays.deepToString(param.args)));
+            }
             return;
         }
-        LoggerLog(new Exception("startActivity_allowed:"+ Arrays.deepToString(param.args)));
+        if (!isStartActivityInPackage(intent,getPackageName(Binder.getCallingUid()))){
+            if (showStartActivityAllowedAndDisallowed){
+                LoggerLog(new Exception("startActivity_allowed:" + Arrays.deepToString(param.args)));
+            }
+        }
     };
     public static final SimpleExecutor startActivitiesByIntentArray = param -> {
         Pair<Integer,Intent[]> pair = findClassIndexAndObjectInArgs(param.args,Intent[].class);
@@ -122,7 +141,16 @@ public class HookIActivityTaskManager {
         List<Intent> intentList = Arrays.asList(pair.second);
         intentList.removeIf(HookIActivityTaskManager::startActivityIntentFilter);
         param.args[pair.first] = intentList.toArray();
-        LoggerLog(new Exception("startActivities_allowed:"+ Arrays.deepToString(param.args)));
+        for (Intent intent:intentList) {
+            if (!isStartActivityInPackage(intent, getPackageName(Binder.getCallingUid()))) {
+                if (showStartActivityAllowedAndDisallowed){
+                    LoggerLog(new Exception("startActivity_allowed:" + Arrays.deepToString(param.args)));
+                }
+            }
+        }
+        if (showStartActivityAllowedAndDisallowed){
+            LoggerLog(new Exception("startActivities_allowed:" + Arrays.deepToString(param.args)));
+        }
     };
     public static void hookIActivityTaskManager(Class<?> hookClass){
 //        Set<String> toAvoid = new HashSet<>();
@@ -130,13 +158,20 @@ public class HookIActivityTaskManager {
 //        listenClassForNonSysUid(hookClass,toAvoid);
 
         hookAllMethodsWithCache_Auto(hookClass,"startActivity",startActivityReturnInt,getSystemChecker_PackageNameAt(1));
-//        hookAllMethodsWithCache_Auto(hookClass,"startActivityFromRecents",0);
+        hookAllMethodsWithCache_Auto(hookClass,"startActivityFromRecents",startActivityReturnInt);
         hookAllMethodsWithCache_Auto(hookClass,"startActivityAsCaller",startActivityReturnInt,getSystemChecker_PackageNameAt(1));
         hookAllMethodsWithCache_Auto(hookClass,"startActivities",startActivitiesByIntentArray,getSystemChecker_PackageNameAt(1));
         hookAllMethodsWithCache_Auto(hookClass,"startActivityAsUser",startActivityReturnInt,getSystemChecker_PackageNameAt(1));
         hookAllMethodsWithCache_Auto(hookClass,"startNextMatchingActivity",startActivityReturnBoolean);
         hookAllMethodsWithCache_Auto(hookClass,"startActivityIntentSender",startActivityReturnInt);
-//        hookAllMethodsWithCache_Auto(hookClass,"startActivityAndWait",WaitResult,getSystemChecker_PackageNameAt(1));
+
+        //TODO:Randomize it👇.
+        WaitResult result = new WaitResult();
+        result.timeout = false;
+        result.launchState = LAUNCH_STATE_COLD;
+        result.result = 0;
+        result.who = new ComponentName("com.android","system");
+        hookAllMethodsWithCache_Auto(hookClass,"startActivityAndWait",result,getSystemChecker_PackageNameAt(1));
         hookAllMethodsWithCache_Auto(hookClass,"startActivityWithConfig",startActivityReturnInt,getSystemChecker_PackageNameAt(1));
         hookAllMethodsWithCache_Auto(hookClass,"startVoiceActivity",startActivityReturnInt,getSystemChecker_PackageNameAt(0));
         //TODO:Randomize it👇.
@@ -145,6 +180,9 @@ public class HookIActivityTaskManager {
         hookAllMethodsWithCache_Auto(hookClass,"startActivityFromGameSession",startActivityReturnInt,getSystemChecker_PackageNameAt(1));
         hookAllMethodsWithCache_Auto(hookClass,"startRecentsActivity",startActivityReturnNull);
         hookAllMethodsWithCache_Auto(hookClass,"isActivityStartAllowedOnDisplay",true);
+
+
+
 //        hookAllMethodsWithCache_Auto(hookClass,"unhandledBack",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"getActivityClientController",IActivityClientController);
 //        hookAllMethodsWithCache_Auto(hookClass,"getFrontActivityScreenCompatMode",0);
@@ -152,6 +190,7 @@ public class HookIActivityTaskManager {
 //        hookAllMethodsWithCache_Auto(hookClass,"setFocusedTask",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"removeTask",true);
 //        hookAllMethodsWithCache_Auto(hookClass,"removeAllVisibleRecentTasks",null);
+        hookAllMethodsWithCache_Auto(hookClass,"isGetTasksAllowed",false,getSystemChecker_UidAt(-1));
 //        hookAllMethodsWithCache_Auto(hookClass,"getTasks",EMPTY_ARRAYLIST);
 //        hookAllMethodsWithCache_Auto(hookClass,"moveTaskToFront",null,getSystemChecker_PackageNameAt(1));
 ////        hookAllMethodsWithCache_Auto(hookClass,"getRecentTasks",ParceledListSlice<ActivityManager.RecentTaskInfo>);
@@ -191,7 +230,7 @@ public class HookIActivityTaskManager {
 //        hookAllMethodsWithCache_Auto(hookClass,"requestAutofillData",true);
 //        hookAllMethodsWithCache_Auto(hookClass,"isAssistDataAllowed",true);
 //        hookAllMethodsWithCache_Auto(hookClass,"requestAssistDataForTask",true,getSystemChecker_PackageNameAt(2));
-//        hookAllMethodsWithCache_Auto(hookClass,"keyguardGoingAway",null);
+        hookAllMethodsWithCache_Auto(hookClass,"keyguardGoingAway",null);
 //        hookAllMethodsWithCache_Auto(hookClass,"suppressResizeConfigChanges",null);
 ////        hookAllMethodsWithCache_Auto(hookClass,"getWindowOrganizerController",IWindowOrganizerController);
 //        hookAllMethodsWithCache_Auto(hookClass,"supportsLocalVoiceInteraction",true);
