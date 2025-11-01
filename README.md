@@ -1,9 +1,13 @@
 Remake DeviceAddressTweaker in a (android) Service way so that apps (in China) won't be able to detect xposed.
 
 
+[dat_selinux](https://github.com/AcdeAsdff/dat_selinux_and_more) is also needed
+
+
 -------------------
 
 
+需要[dat_selinux](https://github.com/AcdeAsdff/dat_selinux_and_more)(magisk模块)
 在system_server层重置DeviceAddressTweaker(已废弃项目，因为要注入客户端，会被不同厂商的许多检测方法针对，避免这些检测方法需要极大的工作量。)以躲避Xposed检测
 随机内容主要根据UID生成随机种子进行随机
 
