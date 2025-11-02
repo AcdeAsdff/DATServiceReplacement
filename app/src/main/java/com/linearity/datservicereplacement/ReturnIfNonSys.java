@@ -223,7 +223,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
                 };
@@ -236,7 +236,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
                 };
@@ -249,7 +249,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
 
@@ -260,7 +260,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
                 };
@@ -273,7 +273,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
                 };
@@ -286,7 +286,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
                 };
@@ -299,7 +299,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
 
@@ -310,7 +310,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
                 };
@@ -323,7 +323,7 @@ public class ReturnIfNonSys {
                         try {
                             simpleExecutorWithMode.simpleExecutor.execute(param);
                         }catch (Exception e){
-                            e.printStackTrace();
+                            LoggerLog(e);
                         }
                     }
                 };

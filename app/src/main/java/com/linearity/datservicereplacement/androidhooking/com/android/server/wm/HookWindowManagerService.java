@@ -10,9 +10,11 @@ import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_LOW_PROFILE;
 import static android.view.WindowInsetsController.APPEARANCE_OPAQUE_STATUS_BARS;
 import static android.view.WindowInsetsController.APPEARANCE_SEMI_TRANSPARENT_STATUS_BARS;
+import static android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager.isActivityRecordSystem;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager.modifyConfiguration;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.findClassIndexAndObjectInArgs;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_BooleanAt;
@@ -22,6 +24,8 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.showBefore;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.isPublicHookedPoolRegistered;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
+import static com.linearity.utils.LoggerUtils.showDeepFields;
+import static com.linearity.utils.LoggerUtils.showObjectFields;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 
 import android.app.StatusBarManager;
@@ -29,11 +33,13 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Insets;
+import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.Binder;
 import android.os.UserHandle;
 import android.util.Base64;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.InsetsFrameProvider;
 import android.view.WindowManager;
 
@@ -548,12 +554,29 @@ public class HookWindowManagerService {
 
                 if (windowNamesToInvisible.contains(name)){
                     return true;
-                }else if (name.toLowerCase().contains("statusbar")){
-                    int mOwnerUid = WindowState_f_mOwnerUid.getInt(windowState);
-                    if (isSystemApp(mOwnerUid)){
-                        LoggerLog(windowState + " " + mOwnerUid +" " + name);
-                    }
                 }
+//                else {
+//
+//                    int mOwnerUid = WindowState_f_mOwnerUid.getInt(windowState);
+//                    if (10290 == mOwnerUid){
+//                        WindowManager.LayoutParams params = (WindowManager.LayoutParams) XposedHelpers.getObjectField(windowState,"mAttrs");
+//
+//                        if (params != null){
+//                            if (params.width == WindowManager.LayoutParams.WRAP_CONTENT
+//                                    && params.height == WindowManager.LayoutParams.WRAP_CONTENT
+////                                    && params.gravity == Gravity.CENTER
+////                                    && params.type == WindowManager.LayoutParams.TYPE_APPLICATION
+////                                    && params.format == PixelFormat.TRANSPARENT
+//                                    && (params.flags & FLAG_DIM_BEHIND) != 0
+//                            ){
+//                                return true;
+//                            }else {
+//                                LoggerLog(windowState + " " + mOwnerUid+" " + name + params);
+//                            }
+//                        }
+////                        showObjectFields(windowState,"[linearity-datsr-window_state_dump]");
+//                    }
+//                }
 //                else if (!windowNamesNotToShow.contains(name)){
 //                    int mOwnerUid = WindowState_f_mOwnerUid.getInt(windowState);
 //                    if (isSystemApp(mOwnerUid)){

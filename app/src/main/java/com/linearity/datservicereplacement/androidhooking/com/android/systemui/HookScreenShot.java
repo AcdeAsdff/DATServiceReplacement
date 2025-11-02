@@ -310,7 +310,7 @@ public class HookScreenShot {
             bitmapRef.set(resolveBitmapPart2(before));
             before.recycle();
             int remaining = toResolve.second.addAndGet(-1);
-            LoggerLog("remaining:" + remaining);
+//            LoggerLog("remaining:" + remaining);
         }
     };
     public static Bitmap resolveBitmap(Bitmap bitmap){

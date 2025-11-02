@@ -56,6 +56,7 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.job
 import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.HookSELinuxMMAC;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.hookPackageManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.policy.keyguard.HookKeyGuard;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookBack;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookClientLifecycleManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookIActivityTaskManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.adservices.HookAd;
@@ -154,11 +155,7 @@ public class StartHook implements IXposedHookLoadPackage {
         return false;
     }
     public static <T> boolean isSetRegistered(T toCheck,Set<T> pool){
-        if (pool.contains(toCheck)) {
-            return true;
-        }
-        pool.add(toCheck);
-        return false;
+        return !pool.add(toCheck);
     }
     public static <T> boolean isSetRegistered(T toCheck,Map<T,Boolean> pool){
         if (pool.containsKey(toCheck)) {
@@ -170,6 +167,7 @@ public class StartHook implements IXposedHookLoadPackage {
     //TODO:Dynamic add packages and persists after reboot
     public static final Set<String> WHITELIST_PACKAGE_NAMES = new HashSet<>();
     public static final Set<String> SELINUX_TRUST_AS_NORMAL_PACKAGE_NAMES = new HashSet<>();
+    public static final Set<String> SELINUX_TRUST_AS_NORMAL_PACKAGE_HEADERS = new HashSet<>();
     public static final Map<Integer,Map<String,Object>> settingsForUid = new HashMap<>();
 
     //Don't forget to add packages u want to tell real info!
@@ -209,11 +207,14 @@ public class StartHook implements IXposedHookLoadPackage {
                 "com.sega.pjsekai",
                 "com.hermes.mk.asia.qooapp",
                 "com.drdisagree.colorblendr",
-                "com.prism.hider.tg.ninja"
+                "com.prism.hider.tg.ninja",
+                "com.android.messaging",
+                "com.android.htmlviewer",
         }){
             WHITELIST_PACKAGE_NAMES.add(pkgName);
             SELINUX_TRUST_AS_NORMAL_PACKAGE_NAMES.add(pkgName);
         }
+        SELINUX_TRUST_AS_NORMAL_PACKAGE_HEADERS.add("com.android");
 //        WHITELIST_PACKAGE_NAMES.add("com.lerist.fakelocation");
 //        WHITELIST_PACKAGE_NAMES.add("com.MobileTicket");
     }
@@ -442,9 +443,9 @@ public class StartHook implements IXposedHookLoadPackage {
         HookBluetooth.doHook();
         HookNFC.doHook();
 
-        HookTelecomService.doHook();
-
         HookTaskRelated.doHook();
+
+        HookTelecomService.doHook();
 //        HookTelephony.doHook();//causes endless reboot TODO:Find out why
 //        HookTelephonyProvider.doHook();//I didn't even implement it.//TODO: implement
 
@@ -478,6 +479,8 @@ public class StartHook implements IXposedHookLoadPackage {
         HookParcel.doHook();
 
         HookClientLifecycleManager.doHook();
+
+        HookBack.doHook();
 
 //        Others.doHook();
 
@@ -622,7 +625,7 @@ public class StartHook implements IXposedHookLoadPackage {
             public void run() {
                 super.run();
                 try {
-                    sleep(3000);
+                    sleep(6000);
                 } catch (InterruptedException e) {
                     LoggerLog(e);
                 }
@@ -636,6 +639,9 @@ public class StartHook implements IXposedHookLoadPackage {
 
     }
     private static final String[] constCommands = {
+            "resetprop -n dalvik.vm.usejit false",//hope to avoid unloading
+
+            //but now we check unlock stats via keystore,i can only block it by disable accessing to that service
             "resetprop -n ro.boot.vbmeta.device_state locked",
             "resetprop -n ro.boot.verifiedbootstate green",
             "resetprop -n ro.boot.flash.locked 1",

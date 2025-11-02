@@ -71,7 +71,7 @@ public class ExpectInfo {
     public static final Set<String> nopSet = new HashSet<>();
 
     static {
-
+        nopSet.add("activity_manager_constants");
         nopSet.add("doze_enabled");
         nopSet.add("backup_enabled");
         nopSet.add("stylus_handwriting_enabled");
@@ -245,6 +245,7 @@ public class ExpectInfo {
         nopSet.add("accessibility_captioning_locale");
         nopSet.add("accessibility_captioning_enabled");
         nopSet.add("POWER_SAVE_MODE_OPEN");
+        nopSet.add("screenshot.scroll_capture_delay");
     }
 
     public static final Map<String,Object> constMap = new HashMap<>();
