@@ -5,7 +5,9 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsW
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
 import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemTask;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookWindowManagerService.isWindowStateSystem;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.wm.HookWindowManagerService.isWindowStateSystem_uid;
 import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
@@ -54,9 +56,10 @@ public class HookBack {
                 long current = System.currentTimeMillis();
                 if (current < timeStampCooldown.get()){return;}
                 boolean runHideWindowFlag = false;
-                if (100 < (current - timeStampLast.get())&& (current - timeStampLast.get()) < 200){
+                long timeDistance = current - timeStampLast.get();
+                if (100 < timeDistance && timeDistance < 200){
                     if (triggerCounter.incrementAndGet() % ABILITY_TRIGGER_NEEDS_RETURN_TIMES == 0){
-                        triggerCounter.addAndGet(-ABILITY_TRIGGER_NEEDS_RETURN_TIMES);
+                        triggerCounter.set(0);
                         runHideWindowFlag = true;
                     }
                 }
@@ -68,7 +71,27 @@ public class HookBack {
                     Object/*WindowManagerService*/ wms = XposedHelpers.getObjectField(param.thisObject,"mWindowManagerService");
                     Object/*ActivityTaskManagerService*/ mAtmService = XposedHelpers.getObjectField(wms,"mAtmService");
                     Object/*RootWindowContainer*/ mRoot = XposedHelpers.getObjectField(wms,"mRoot");
-                    Object/*Task*/ topTask = XposedHelpers.callMethod(mRoot,"getTopDisplayFocusedRootTask");
+                    AtomicReference<Object/*Task*/> taskRef = new AtomicReference<>(null);
+                    XposedHelpers.callMethod(mRoot, "forAllRootTasks", new Consumer<Object/*Task*/>() {
+                        @Override
+                        public void accept(Object task) {
+                            boolean isHomeOrRecents = (boolean) XposedHelpers.callMethod(task, "isActivityTypeHomeOrRecents");
+//                            boolean isVisible = (boolean) XposedHelpers.callMethod(task, "isVisible");
+
+                            if (!isHomeOrRecents) {
+                                if (!isSystemTask(task)){
+                                    if (taskRef.get() == null){
+                                        taskRef.set(task);
+                                    }
+//                                    LoggerLog(task);
+                                }
+                            }
+                        }
+                    });
+                    Object/*Task*/ topTask = taskRef.get();//XposedHelpers.callMethod(mRoot,"getTopDisplayFocusedRootTask");
+                    if (topTask == null){
+                        return;
+                    }
                     Object/*DisplayContent*/ displayContent = XposedHelpers.getObjectField(topTask,"mDisplayContent");
 //                Object/*DisplayContent*/ displayContent = XposedHelpers.callMethod(mRoot,"getDisplayContent",new Class[]{int.class},0);
 //                Object/*ActivityRecord*/ activityRecord = XposedHelpers.callMethod(topTask, "getTopResumedActivity");
@@ -88,12 +111,15 @@ public class HookBack {
                                         Object win = args[0];
                                         Boolean visible = (Boolean) XposedHelpers.callMethod(win, "isVisible");
                                         boolean isTargeted = true;
-                                        if (!isWindowStateSystem(win)){
+                                        boolean chosenWindowFlag = topWindowRef.get() == null;
+//                                        if (chosenWindowFlag){
+//                                            return false;
+//                                        }
+                                        if (isWindowStateSystem(win)){
                                             return false;
                                         }
                                         boolean visibilityFlag = visible != null && visible || affectedWindows.add(win);
-                                        boolean chosenWindowFlag = topWindowRef.get() == null;
-                                        LoggerLog(win + " " + win.getClass() + " " + visibilityFlag + " " + chosenWindowFlag + " " + isTargeted);
+                                        LoggerLog(win + " " + win.getClass() + " " + visibilityFlag + " " + isTargeted);
                                         if (
                                                 visibilityFlag
                                                         && chosenWindowFlag
@@ -112,7 +138,10 @@ public class HookBack {
                         Object topWindow = topWindowRef.get();
                         if (topWindow != null){
                             LoggerLog("topWindow:" + topWindow + "|" + topWindow.getClass());
-                            XposedHelpers.callMethod(topWindow, "hide", false, false);
+                            //it would be recycled quickly so sometimes throws exception
+                            try {
+                                XposedHelpers.callMethod(topWindow, "hide", false, false);
+                            }catch (NullPointerException ignore){}
                             timeStampCooldown.set(current + ABILITY_COOLDOWN_MILLISECONDS);
                         }
                     }

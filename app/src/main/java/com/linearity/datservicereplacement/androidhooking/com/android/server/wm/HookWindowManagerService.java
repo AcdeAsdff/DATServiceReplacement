@@ -434,6 +434,19 @@ public class HookWindowManagerService {
             return true;
         }
     }
+    public static boolean isWindowStateSystem_uid(Object windowState){
+        if (windowState == null){return true;}
+        if (WindowState_mOwnerUid == null){
+            WindowState_mOwnerUid = XposedHelpers.findField(windowState.getClass(),"mOwnerUid");
+        }
+        try {
+            int mOwnerUid = (int) WindowState_mOwnerUid.get(windowState);
+            return isSystemApp(mOwnerUid);
+        }catch (Exception e){
+            LoggerLog(e);
+            return true;
+        }
+    }
 
     public static final SimpleExecutor modifyConfigurationResult = param -> {
         Configuration configuration = modifyConfiguration((Configuration) param.getResult());
