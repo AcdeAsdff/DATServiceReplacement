@@ -151,7 +151,7 @@ public class ReturnIfNonSys {
             catch (ClassCastException ignore){
                 return true;
             }
-            catch (Exception e){
+            catch (Throwable e){
                 tryGetPM(param.thisObject);
                 if (!isSystemApp(Binder.getCallingUid())){
                     return false;
@@ -185,7 +185,7 @@ public class ReturnIfNonSys {
             try{
                 return isSystemApp(Binder.getCallingUid())
                         && isSystemApp((String) param.args[tempIndex]);
-            }catch (Exception e){
+            }catch (Throwable e){
                 tryGetPM(param.thisObject);
                 if (!isSystemApp(Binder.getCallingUid())){
                     return false;
@@ -211,123 +211,113 @@ public class ReturnIfNonSys {
         return switchForSimpleExecutor(simpleExecutorWithMode,defaultSystemChecker);
     }
     private static XC_MethodHook switchForSimpleExecutor(SimpleExecutorWithMode simpleExecutorWithMode,SystemAppChecker systemAppChecker){
-        switch (simpleExecutorWithMode.mode){
-            case MODE_BEFORE:
-                return new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        if (systemAppChecker.checkSystemApp(param)){
-                            return;
-                        }
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+        return switch (simpleExecutorWithMode.mode) {
+            case MODE_BEFORE -> new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (systemAppChecker.checkSystemApp(param)) {
+                        return;
                     }
-                };
-            case MODE_AFTER:
-                return new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        if (systemAppChecker.checkSystemApp(param)){return;}
-                        super.afterHookedMethod(param);
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
                     }
-                };
-            case MODE_BEFORE_AND_AFTER:
-                return new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        if (systemAppChecker.checkSystemApp(param)){return;}
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                }
+            };
+            case MODE_AFTER -> new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    if (systemAppChecker.checkSystemApp(param)) {
+                        return;
                     }
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
+                    }
+                }
+            };
+            case MODE_BEFORE_AND_AFTER -> new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (systemAppChecker.checkSystemApp(param)) {
+                        return;
+                    }
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
+                    }
+                }
 
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        super.afterHookedMethod(param);
-                        if (systemAppChecker.checkSystemApp(param)){return;}//fixed clipboard not working
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    if (systemAppChecker.checkSystemApp(param)) {
+                        return;
+                    }//fixed clipboard not working
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
                     }
-                };
-            case MODE_BEFORE_NO_CHECK:
-                return new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-//                        if (isSystemApp(Binder.getCallingUid())){return;}
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                }
+            };
+            case MODE_BEFORE_NO_CHECK -> new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
                     }
-                };
-            case MODE_AFTER_NO_CHECK:
-                return new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                        if (isSystemApp(Binder.getCallingUid())){return;}
-                        super.afterHookedMethod(param);
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                }
+            };
+            case MODE_AFTER_NO_CHECK -> new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    super.afterHookedMethod(param);
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
                     }
-                };
-            case MODE_BEFORE_AND_AFTER_NO_CHECK:
-                return new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-//                        if (isSystemApp(Binder.getCallingUid())){return;}
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                }
+            };
+            case MODE_BEFORE_AND_AFTER_NO_CHECK -> new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
                     }
+                }
 
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        super.afterHookedMethod(param);
-                        if (isSystemApp(Binder.getCallingUid())){return;}//fixed clipboard not working
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
                     }
-                };
-            default:
-                return new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        super.beforeHookedMethod(param);
-                        if (systemAppChecker.checkSystemApp(param)){return;}//fixed clipboard not working
-                        try {
-                            simpleExecutorWithMode.simpleExecutor.execute(param);
-                        }catch (Exception e){
-                            LoggerLog(e);
-                        }
+                }
+            };
+            default -> new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    if (systemAppChecker.checkSystemApp(param)) {
+                        return;
+                    }//fixed clipboard not working
+                    try {
+                        simpleExecutorWithMode.simpleExecutor.execute(param);
+                    } catch (Throwable e) {
+                        LoggerLog(e);
                     }
-                };
-        }
+                }
+            };
+        };
     }
     public static final Map<long[],SimpleExecutor> pickFromArray_SimpleExecutor_map = new HashMap<>();
     public static SimpleExecutor pickFromArray_SimpleExecutor(long[] returnIfNonSysArr){
@@ -349,7 +339,7 @@ public class ReturnIfNonSys {
         try {
 //            return new Network(netId,mPrivateDnsBypass);
             return NetworkConstructUtils.NETWORK_CONSTRUCTOR.newInstance(netId,mPrivateDnsBypass);
-        }catch (Exception e){
+        }catch (Throwable e){
             LoggerLog(e);
             return null;
         }
@@ -567,7 +557,7 @@ public class ReturnIfNonSys {
                 }
                 if (!appInfo.isSystemApp()){return false;}
             }
-        }catch (Exception e){
+        }catch (Throwable e){
             LoggerLog(e);
         }
         return true;
@@ -587,7 +577,7 @@ public class ReturnIfNonSys {
                     return false;
                 }
             }
-        }catch (Exception e){
+        }catch (Throwable e){
             LoggerLog(e);
         }
         return true;
@@ -605,7 +595,7 @@ public class ReturnIfNonSys {
                     return uid;
                 }
             }
-        }catch (Exception e){
+        }catch (Throwable e){
             LoggerLog(e);
         }
         return Integer.MIN_VALUE;
@@ -856,7 +846,7 @@ public class ReturnIfNonSys {
                         if (real != null && !real.isEmpty()) return real;
                     }
                 }
-            }catch (Exception e){
+            }catch (Throwable e){
                 LoggerLog(e);
             }
             return name; // fallback — not synthetic or unknown pattern
@@ -976,7 +966,7 @@ public class ReturnIfNonSys {
             try{
                 return isSystemApp(Binder.getCallingUid())
                         && isSystemApp((AttributionSource) param.args[tempIndex]);
-            }catch (Exception e){
+            }catch (Throwable e){
                 tryGetPM(param.thisObject);
                 if (!isSystemApp(Binder.getCallingUid())){
                     return false;
@@ -1014,7 +1004,7 @@ public class ReturnIfNonSys {
             try{
                 return isSystemApp(Binder.getCallingUid())
                         && isSystemApp((AttributionSource) param.args[tempIndex]);
-            }catch (Exception e){
+            }catch (Throwable e){
                 tryGetPM(param.thisObject);
                 if (!isSystemApp(Binder.getCallingUid())){
                     return false;
@@ -1049,7 +1039,7 @@ public class ReturnIfNonSys {
             try{
                 return isSystemApp(Binder.getCallingUid())
                         && isSystemApp((WorkSource) param.args[tempIndex]);
-            }catch (Exception e){
+            }catch (Throwable e){
                 tryGetPM(param.thisObject);
                 if (!isSystemApp(Binder.getCallingUid())){
                     return false;
@@ -1089,7 +1079,7 @@ public class ReturnIfNonSys {
                 return isSystemApp(Binder.getCallingUid())
                         && isSystemApp((WorkSource) param.args[tempWorkSourceIndex])
                         && isSystemApp((WorkSource) param.args[tempAttrSourceIndex]);
-            }catch (Exception e){
+            }catch (Throwable e){
                 tryGetPM(param.thisObject);
                 if (!isSystemApp(Binder.getCallingUid())){
                     return false;
@@ -1122,7 +1112,7 @@ public class ReturnIfNonSys {
             try{
                 return isSystemApp(Binder.getCallingUid())
                         && ((boolean) param.args[tempIndex]);
-            }catch (Exception e){
+            }catch (Throwable e){
                 tryGetPM(param.thisObject);
                 if (!isSystemApp(Binder.getCallingUid())){
                     return false;

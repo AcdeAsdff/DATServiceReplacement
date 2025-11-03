@@ -2,16 +2,11 @@ package com.linearity.datservicereplacement.androidhooking.com.android.server.pm
 
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
-import static com.linearity.datservicereplacement.ReturnIfNonSys.showAfter;
 import static com.linearity.datservicereplacement.StartHook.SELINUX_TRUST_AS_NORMAL_PACKAGE_HEADERS;
 import static com.linearity.datservicereplacement.StartHook.SELINUX_TRUST_AS_NORMAL_PACKAGE_NAMES;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
-import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 
-import android.util.Log;
-
-import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -22,8 +17,8 @@ public class HookSELinuxMMAC {
     public static void doHook(){
         classesAndHooks.put("com.android.server.pm.SELinuxMMAC",HookSELinuxMMAC::hookSELinuxMMAC);
         classesAndHooks.put("com.android.server.pm.PackageSetting",HookSELinuxMMAC::hookPackageSetting);
-        classesAndHooks.put("com.android.server.pm.PackageManagerService",HookSELinuxMMAC::hookPackageManagerService);
-        classesAndHooks.put("com.android.server.pm.pkg.mutate.PackageStateMutator",HookSELinuxMMAC::hookPackageStateMutator);
+//        classesAndHooks.put("com.android.server.pm.PackageManagerService",HookSELinuxMMAC::hookPackageManagerService);
+//        classesAndHooks.put("com.android.server.pm.pkg.mutate.PackageStateMutator",HookSELinuxMMAC::hookPackageStateMutator);
     }
 
     private static void hookSELinuxMMAC(Class<?> hookClass){

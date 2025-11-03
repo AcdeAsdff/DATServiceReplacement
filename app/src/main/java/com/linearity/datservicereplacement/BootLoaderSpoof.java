@@ -4,6 +4,7 @@ import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.PublicSeed.publicSeed;
 
 import com.linearity.utils.ExtendedRandom;
+import com.linearity.utils.NotFinished;
 
 import android.app.AndroidAppHelper;
 import android.app.Application;
@@ -56,7 +57,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
+@NotFinished//now i disabled keystore via selinux
 public class BootLoaderSpoof {
 
 //    private static final List<Certificate> certs_EC = new LinkedList<>();
