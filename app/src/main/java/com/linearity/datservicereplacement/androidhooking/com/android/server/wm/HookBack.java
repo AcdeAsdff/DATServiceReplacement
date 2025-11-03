@@ -29,6 +29,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 
 public class HookBack {
+    private static final long ABILITY_COOLDOWN_MILLISECONDS = 2000;
     public static void doHook(){
         classesAndHooks.put("com.android.server.wm.BackNavigationController",HookBack::hookBackNavigationController);
         classesAndHooks.put("android.window.WindowOnBackInvokedDispatcher.OnBackInvokedCallbackWrapper",HookBack::hookOnBackInvokedCallbackWrapper);
@@ -67,7 +68,7 @@ public class HookBack {
                         );
                         LoggerLog("--------------------");
                         AtomicReference<Object> topWindowRef = new AtomicReference<>(null);
-// Create a dynamic proxy
+                        //sorry guys i didn't get a android sdk jar with com.android.internal.util.ToBooleanFunction
                         Object callback = java.lang.reflect.Proxy.newProxyInstance(
                                 toBooleanFuncClass.getClassLoader(),
                                 new Class[]{toBooleanFuncClass},
@@ -76,13 +77,6 @@ public class HookBack {
                                         Object win = args[0];
                                         Boolean visible = (Boolean) XposedHelpers.callMethod(win, "isVisible");
                                         boolean isTargeted = true;
-//                                    String windowStr = String.valueOf(win);
-//                                    for (String checkContain:mustContainsString){
-//                                        if (windowStr.contains(checkContain)){
-//                                            isTargeted = true;
-//                                            break;
-//                                        }
-//                                    }
                                         if (!isWindowStateSystem(win)){
                                             return false;
                                         }
@@ -103,17 +97,12 @@ public class HookBack {
                                     return null;
                                 }
                         );
-
-// Call forAllWindows
                         XposedHelpers.callMethod(displayContent, "forAllWindows", callback, true /*top-to-bottom*/);
-
-// Retrieve top window
                         Object topWindow = topWindowRef.get();
                         if (topWindow != null){
                             LoggerLog("topWindow:" + topWindow + "|" + topWindow.getClass());
                             XposedHelpers.callMethod(topWindow, "hide", false, false);
-//                        XposedHelpers.callMethod(topWindow, "removeImmediately");
-                            timeStampCooldown.set(current + 1000);
+                            timeStampCooldown.set(current + ABILITY_COOLDOWN_MILLISECONDS);
                         }
                     }
                 }else{
