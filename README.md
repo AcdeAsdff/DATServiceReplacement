@@ -9,7 +9,7 @@ Remake DeviceAddressTweaker in a (android) Service way so that apps (in China) w
 
 需要[dat_selinux](https://github.com/AcdeAsdff/dat_selinux_and_more)(magisk模块)
 在system_server层重置DeviceAddressTweaker(已废弃项目，因为要注入客户端，会被不同厂商的许多检测方法针对，避免这些检测方法需要极大的工作量。)以躲避Xposed检测
-随机内容主要根据UID生成随机种子进行随机
+随机内容主要根据UID生成随机种子进行随机（注："白名单应用"区别于"非系统应用"，可以根据包名在WHITELIST_PACKAGE_NAMES设置，暂未加入动态添加方法）
 
 - 非系统应用得到的蓝牙返回值(随机)
 - 非系统应用得到的剪贴板返回值(随机)
@@ -18,6 +18,7 @@ Remake DeviceAddressTweaker in a (android) Service way so that apps (in China) w
 - 非系统应用得到的应用权限（检查权限时总是允许，但对于事实上拒绝的权限用起来照样被拒绝）
 - 非系统应用得到的闹钟信息(null)
 - 非系统应用读取的剪贴板信息(随机)
+- 非系统应用快速按返回(5~10次/秒，开区间)可以隐藏最上方窗口
 - [待测试]非系统应用得到的WIFI信息(随机)
 - [待测试]非系统应用得到的电池状态(随机)
 - [待测试]非系统应用得到的输入法信息(搜狗输入法)

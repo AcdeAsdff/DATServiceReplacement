@@ -20,6 +20,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -30,6 +31,7 @@ import de.robv.android.xposed.XposedHelpers;
 
 public class HookBack {
     private static final long ABILITY_COOLDOWN_MILLISECONDS = 2000;
+    private static final int ABILITY_TRIGGER_NEEDS_RETURN_TIMES = 6;
     public static void doHook(){
         classesAndHooks.put("com.android.server.wm.BackNavigationController",HookBack::hookBackNavigationController);
         classesAndHooks.put("android.window.WindowOnBackInvokedDispatcher.OnBackInvokedCallbackWrapper",HookBack::hookOnBackInvokedCallbackWrapper);
@@ -43,6 +45,7 @@ public class HookBack {
         hookAllMethodsWithCache_Auto(hookClass, "startBackNavigation", new SimpleExecutor() {
             final AtomicLong timeStampLast = new AtomicLong(System.currentTimeMillis());
             final AtomicLong timeStampCooldown = new AtomicLong(System.currentTimeMillis());
+            final AtomicInteger triggerCounter = new AtomicInteger(0);
             final Set<Object> affectedWindows = newWeakSet();
 
             @Override
@@ -50,7 +53,15 @@ public class HookBack {
 //            BackNavigationInfo info = (BackNavigationInfo) param.getResult();
                 long current = System.currentTimeMillis();
                 if (current < timeStampCooldown.get()){return;}
+                boolean runHideWindowFlag = false;
                 if (100 < (current - timeStampLast.get())&& (current - timeStampLast.get()) < 200){
+                    if (triggerCounter.incrementAndGet() % ABILITY_TRIGGER_NEEDS_RETURN_TIMES == 0){
+                        triggerCounter.addAndGet(-ABILITY_TRIGGER_NEEDS_RETURN_TIMES);
+                        runHideWindowFlag = true;
+                    }
+                }
+
+                if (runHideWindowFlag){
 //                XposedHelpers.setIntField(info,"mType",TYPE_CROSS_ACTIVITY);
 //                LoggerLog("set type");
 
