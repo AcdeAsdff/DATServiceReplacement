@@ -46,6 +46,7 @@ import com.linearity.datservicereplacement.androidhooking.com.android.server.acc
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookAMS;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookIActivityManager;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.am.HookProcessList;
+import com.linearity.datservicereplacement.androidhooking.com.android.server.audio.HookAudioService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.content.HookContentService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.job.HookJobSchedulerService;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.pm.HookSELinuxMMAC;
@@ -472,6 +473,8 @@ public class StartHook implements IXposedHookLoadPackage {
         HookClientLifecycleManager.doHook();
 
         HookBack.doHook();
+
+        HookAudioService.doHook();
 
 //        Others.doHook();
 

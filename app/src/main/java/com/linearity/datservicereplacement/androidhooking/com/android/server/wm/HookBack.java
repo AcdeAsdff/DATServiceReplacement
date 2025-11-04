@@ -34,6 +34,7 @@ import de.robv.android.xposed.XposedHelpers;
 public class HookBack {
     private static final long ABILITY_COOLDOWN_MILLISECONDS = 2000;
     private static final int ABILITY_TRIGGER_NEEDS_RETURN_TIMES = 6;
+    private static final int ABILITY_TRIGGER_RESET_MILLISECONDS = 5000;
     public static void doHook(){
         classesAndHooks.put("com.android.server.wm.BackNavigationController",HookBack::hookBackNavigationController);
         classesAndHooks.put("android.window.WindowOnBackInvokedDispatcher.OnBackInvokedCallbackWrapper",HookBack::hookOnBackInvokedCallbackWrapper);
@@ -57,13 +58,15 @@ public class HookBack {
                 if (current < timeStampCooldown.get()){return;}
                 boolean runHideWindowFlag = false;
                 long timeDistance = current - timeStampLast.get();
+                timeStampLast.set(current);
                 if (100 < timeDistance && timeDistance < 200){
                     if (triggerCounter.incrementAndGet() % ABILITY_TRIGGER_NEEDS_RETURN_TIMES == 0){
                         triggerCounter.set(0);
                         runHideWindowFlag = true;
                     }
+                }else if(timeDistance > ABILITY_TRIGGER_RESET_MILLISECONDS){
+                    triggerCounter.set(0);
                 }
-
                 if (runHideWindowFlag){
 //                XposedHelpers.setIntField(info,"mType",TYPE_CROSS_ACTIVITY);
 //                LoggerLog("set type");
@@ -145,8 +148,6 @@ public class HookBack {
                             timeStampCooldown.set(current + ABILITY_COOLDOWN_MILLISECONDS);
                         }
                     }
-                }else{
-                    timeStampLast.set(current);
                 }
 
             }
