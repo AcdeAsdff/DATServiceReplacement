@@ -68,7 +68,12 @@ public class HookAudioService {
             FakeVolumeSettings settings = fakeVolumeSettingsForUID(Binder.getCallingUid());
             settings.setVolume(info.getStreamType(),info.getVolumeIndex());
             param.setResult(null);
-        },getSystemChecker_PackageNameAt(2));
+        },param -> {
+            if (param.args.length <= 2){
+                return true;
+            }
+            return getSystemChecker_PackageNameAt(2).checkSystemApp(param);
+        });
         hookAllMethodsWithCache_Auto(hookClass,"getDeviceVolume",(SimpleExecutor)param -> {
             VolumeInfo info = findArgByClassInArgs(param.args,VolumeInfo.class);
             if (info == null){

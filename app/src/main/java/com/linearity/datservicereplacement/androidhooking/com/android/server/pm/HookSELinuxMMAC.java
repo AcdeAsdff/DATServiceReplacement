@@ -5,9 +5,13 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker
 import static com.linearity.datservicereplacement.StartHook.SELINUX_TRUST_AS_NORMAL_PACKAGE_HEADERS;
 import static com.linearity.datservicereplacement.StartHook.SELINUX_TRUST_AS_NORMAL_PACKAGE_NAMES;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
+import static com.linearity.utils.LoggerUtils.LoggerLog;
 import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 
 import com.linearity.utils.SimpleExecutorWithMode;
+
+import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
@@ -24,16 +28,21 @@ public class HookSELinuxMMAC {
     private static void hookSELinuxMMAC(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"getSeInfo",new SimpleExecutorWithMode(MODE_AFTER,param -> {
             String packageName = (String) XposedHelpers.callMethod(param.args[0], "getPackageName");
-            modifySEInfoResult(param,packageName,30,true, 25);
+            modifySEInfoResult(param,packageName,30,Set.of(30,31,32,33),true, 34);
         }),noSystemChecker);
     }
     private static void hookPackageSetting(Class<?> hookClass){
         hookAllMethodsWithCache_Auto(hookClass,"getSeInfo",new SimpleExecutorWithMode(MODE_AFTER,param -> {
             String packageName = (String) XposedHelpers.callMethod(param.thisObject,"getPackageName");
-            modifySEInfoResult(param,packageName,25,false,29);
+            modifySEInfoResult(param,packageName,25,Set.of(30,31,32,33),true,25);
         }),noSystemChecker);
     }
-    private static void modifySEInfoResult(XC_MethodHook.MethodHookParam param,String packageName,int sdkInt,boolean avoidCollisionFlag, int avoidTo){
+    //note that packagemanager isn't fully online yet
+    private static void modifySEInfoResult(XC_MethodHook.MethodHookParam param,String packageName,
+                                           int sdkInt,
+                                           Set<Integer> avoidCollisionSet,
+                                           boolean avoidCollisionFlag,
+                                           Integer avoidTo){
         String result = (String) param.getResult();
         boolean whiteListHeadFlag = false;
         for (String s:SELINUX_TRUST_AS_NORMAL_PACKAGE_HEADERS){
@@ -48,6 +57,13 @@ public class HookSELinuxMMAC {
         }else if (SELINUX_TRUST_AS_NORMAL_PACKAGE_NAMES.contains(packageName)){
             doReplaceFlag = true;
         }
+        boolean hasSDKVerToAvoid = false;
+        for (int i:avoidCollisionSet){
+            if (result.contains("targetSdkVersion=" + i)){
+                hasSDKVerToAvoid = true;
+                break;
+            }
+        }
 
         if (doReplaceFlag) {
 //            LoggerLog(packageName + " " + result + " " + sdkInt + " " + doReplaceFlag);
@@ -57,17 +73,39 @@ public class HookSELinuxMMAC {
                     rebuildResult[i] = "targetSdkVersion=" + sdkInt;
                 }
             }
-            StringBuilder newResult = new StringBuilder();
+            StringBuilder newResultBuilder = new StringBuilder();
             for (int i=0;i<rebuildResult.length-1;i++){
-                newResult.append(rebuildResult[i]).append(":");
+                newResultBuilder.append(rebuildResult[i]).append(":");
             }
-            newResult.append(rebuildResult[rebuildResult.length-1]);
-            param.setResult(newResult.toString());
+            newResultBuilder.append(rebuildResult[rebuildResult.length-1]);
+            String newResult = newResultBuilder.toString();
+
+            if (newResult.contains("default:targetSdkVersion")
+                    && packageName.startsWith("com.android")
+            ){
+                newResult = newResult.replace("default:targetSdkVersion","default:privapp:targetSdkVersion");
+                newResult = newResult.replace("platform:targetSdkVersion","platform:privapp:targetSdkVersion");
+            }
+            param.setResult(newResult);
 //            LoggerLog(packageName + " " + result + " -> " + newResult.toString());
         }
-        else if (result != null && avoidCollisionFlag){
-            param.setResult(result.replace("default:targetSdkVersion=" + sdkInt,"default:targetSdkVersion=" + avoidTo));//this is my place now,get out of here
+        else if (result != null && avoidCollisionFlag && hasSDKVerToAvoid){
+            StringBuilder resultBuilder = new StringBuilder();
+            String[] args = result.split(":");
+//            args[0] = "invalid";
+            for (String s:args){
+                if (!s.contains("targetSdkVersion")){
+                    resultBuilder.append(s).append(":");
+                } else {
+                    resultBuilder.append("targetSdkVersion=").append(avoidTo).append(":");
+                }
+            }
+            param.setResult(resultBuilder.toString().substring(0,resultBuilder.length()-1));//this is my place now,get out of here
         }
+//        if (packageName.contains("com.tencent")){
+//            LoggerLog(packageName + " " + doReplaceFlag + " " + param.getResult()
+//                    + " " + sdkInt  + " " + avoidCollisionFlag + " " + avoidTo + " ");
+//        }
     }
     private static void hookPackageManagerService(Class<?> hookClass){
 //        hookAllMethodsWithCache_Auto(hookClass,"commitPackageStateMutation",showAfter,noSystemChecker);
