@@ -12,24 +12,18 @@ import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecke
 import static com.linearity.datservicereplacement.ReturnIfNonSys.getSystemChecker_PackageNameAt;
 import static com.linearity.utils.AndroidFakes.FakeVolumeSettings.fakeVolumeSettingsForUID;
 
-import android.media.AudioDeviceVolumeManager;
 import android.media.AudioManager;
 import android.media.VolumeInfo;
 import android.os.Binder;
-import android.util.Log;
 import android.view.KeyEvent;
 
-import com.linearity.datservicereplacement.androidhooking.com.android.server.biometrics.HookBiometric;
 import com.linearity.utils.AndroidFakes.FakeVolumeSettings;
-import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.FakeClass.java.util.EmptyArrays;
+import com.linearity.utils.NotFinished;
 import com.linearity.utils.SimpleExecutor;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import de.robv.android.xposed.XposedHelpers;
-
+@NotFinished
 public class HookAudioService {
     public static void doHook(){
         classesAndHooks.put("com.android.server.audio.AudioService",HookAudioService::hookIAudioService);
@@ -168,8 +162,8 @@ public class HookAudioService {
         hookAllMethodsWithCache_Auto(hookClass,"isSurroundFormatEnabled",true);
         hookAllMethodsWithCache_Auto(hookClass,"setEncodedSurroundMode",true);
         hookAllMethodsWithCache_Auto(hookClass,"getEncodedSurroundMode",0);
-        hookAllMethodsWithCache_Auto(hookClass,"setSpeakerphoneOn",null);
-        hookAllMethodsWithCache_Auto(hookClass,"isSpeakerphoneOn",true);
+//        hookAllMethodsWithCache_Auto(hookClass,"setSpeakerphoneOn",null);
+//        hookAllMethodsWithCache_Auto(hookClass,"isSpeakerphoneOn",true);
         hookAllMethodsWithCache_Auto(hookClass,"setBluetoothScoOn",null);
         hookAllMethodsWithCache_Auto(hookClass,"setA2dpSuspended",null);
         hookAllMethodsWithCache_Auto(hookClass,"setLeAudioSuspended",null);

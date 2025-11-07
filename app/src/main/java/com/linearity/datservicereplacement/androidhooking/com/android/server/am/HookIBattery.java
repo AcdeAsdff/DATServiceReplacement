@@ -1,42 +1,47 @@
 package com.linearity.datservicereplacement.androidhooking.com.android.server.am;
 
+import static com.linearity.datservicereplacement.ReturnIfNonSys.CONSTRUCTOR_METHOD_STRING;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYLIST;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.EMPTY_ARRAYMAP;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.hookAllMethodsWithCache_Auto;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.mSystemReady;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.noSystemChecker;
 import static com.linearity.datservicereplacement.StartHook.classesAndHooks;
+import static com.linearity.datservicereplacement.StartHook.newWeakSet;
 import static com.linearity.datservicereplacement.StartHook.registerServiceHook_map;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.getPackageName;
+import static com.linearity.datservicereplacement.androidhooking.com.android.server.pm.PackageManagerUtils.isSystemApp;
+import static com.linearity.utils.AndroidFakes.Battery.HealthStatsParcelerGen.getHealthStatsForUidLocked;
 import static com.linearity.utils.ExtendedRandom.SYSTEM_INSTANCE;
 import static com.linearity.utils.HookUtils.listenClass;
 import static com.linearity.utils.LoggerUtils.LoggerLog;
-import static com.linearity.utils.ModifyThrowable.cleanStackTrace;
+import static com.linearity.utils.LoggerUtils.showObjectFields;
+import static com.linearity.utils.LoggerUtils.showObjectFields_noExpand;
+import static com.linearity.utils.SimpleExecutor.MODE_AFTER;
 import static com.linearity.utils.SimpleExecutor.MODE_BEFORE;
 
 import android.content.Context;
+import android.os.BatteryStats;
 import android.os.Binder;
-import android.os.Parcel;
-import android.os.RemoteException;
-import android.os.health.HealthKeys;
-import android.os.health.HealthStats;
-import android.os.health.HealthStatsParceler;
-import android.os.health.HealthStatsWriter;
-import android.os.health.TimerStat;
-import android.util.ArrayMap;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.MapMaker;
 import com.linearity.utils.ExtendedRandom;
 import com.linearity.utils.NotFinished;
 import com.linearity.utils.SimpleExecutor;
 import com.linearity.utils.SimpleExecutorWithMode;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
-@NotFinished//TODO: qq can still get power remaining
+@NotFinished
 public class HookIBattery {
 
 
@@ -44,6 +49,7 @@ public class HookIBattery {
         classesAndHooks.put("com.android.server.am.BatteryStatsService", HookIBattery::hookIBatteryStats);
         classesAndHooks.put("com.android.server.am.BatteryService$BatteryPropertiesRegistrar", HookIBattery::hookIBatteryPropertiesRegistrar);
         classesAndHooks.put("com.android.server.BatteryService",HookIBattery::hookBatteryService);
+//        classesAndHooks.put("com.android.server.power.stats.BatteryStatsImpl$Uid",HookIBattery::hookBatteryStatsImplUid);//just take a look
 
         hookPublishBinderService();
     }
@@ -63,46 +69,40 @@ public class HookIBattery {
     public static final Class<?> CelluarBatteryStatsClass = XposedHelpers.findClass("android.os.connectivity.CellularBatteryStats", XposedBridge.BOOTCLASSLOADER);
     public static final Map<Integer,Object> FakeCellularBatteryStatsMap = new ConcurrentHashMap<>();
     public static Object generateFakeCellularBatteryStats(int callingUid){
-        ExtendedRandom extendedRandom = ExtendedRandom.generateBasicFromUid(callingUid,"CellularBatteryStats");
-        int arrLen = extendedRandom.nextInt(5) + 1;
-        Object ret = FakeCellularBatteryStatsMap.getOrDefault(callingUid,null);
-        if (ret != null){
-            return ret;
-        }
-        ret = XposedHelpers.newInstance(
-            CelluarBatteryStatsClass,
-            (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
-            (long) extendedRandom.nextInt(300000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(300000),
-            (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
-            (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(30000),
-            extendedRandom.nextLongArr(arrLen, 3000),
-            extendedRandom.nextLongArr(arrLen, 3000), extendedRandom.nextLongArr(arrLen, 3000),
-            (long) extendedRandom.nextInt(3000));
-        FakeCellularBatteryStatsMap.put(callingUid,ret);
-        return ret;
+        return FakeCellularBatteryStatsMap.computeIfAbsent(callingUid,uid -> {
+            ExtendedRandom extendedRandom = ExtendedRandom.generateBasicFromUid(uid,"CellularBatteryStats");
+            int arrLen = extendedRandom.nextInt(5) + 1;
+
+            return XposedHelpers.newInstance(
+                    CelluarBatteryStatsClass,
+                    (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
+                    (long) extendedRandom.nextInt(300000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(300000),
+                    (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
+                    (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(30000),
+                    extendedRandom.nextLongArr(arrLen, 3000),
+                    extendedRandom.nextLongArr(arrLen, 3000), extendedRandom.nextLongArr(arrLen, 3000),
+                    (long) extendedRandom.nextInt(3000));
+        });
     }
     public static final Class<?> WifiBatteryStatsClass = XposedHelpers.findClass("android.os.connectivity.WifiBatteryStats", XposedBridge.BOOTCLASSLOADER);
 
     public static final Map<Integer,Object> FakeWifiBatteryStatsMap = new ConcurrentHashMap<>();
     public static Object generateFakeWifiBatteryStats(int callingUid){
-        ExtendedRandom extendedRandom = ExtendedRandom.generateBasicFromUid(callingUid,"WifiBatteryStats");
-        int arrLen = extendedRandom.nextInt(5) + 1;
-        Object ret = FakeWifiBatteryStatsMap.getOrDefault(callingUid,null);
-        if (ret != null){
-            return ret;
-        }
-        ret = XposedHelpers.newInstance(
-                WifiBatteryStatsClass,
-                (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
-                (long) extendedRandom.nextInt(300000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(300000),
-                (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
-                (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(30000),
-                (long) extendedRandom.nextInt(300000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(300000),
-                extendedRandom.nextLongArr(arrLen, 3000),
-                extendedRandom.nextLongArr(arrLen, 3000), extendedRandom.nextLongArr(arrLen, 3000),
-                (long) extendedRandom.nextInt(3000));
-        FakeWifiBatteryStatsMap.put(callingUid,ret);
-        return ret;
+
+        return FakeWifiBatteryStatsMap.computeIfAbsent(callingUid,uid -> {
+            ExtendedRandom extendedRandom = ExtendedRandom.generateBasicFromUid(callingUid,"WifiBatteryStats");
+            int arrLen = extendedRandom.nextInt(5) + 1;
+            return XposedHelpers.newInstance(
+                    WifiBatteryStatsClass,
+                    (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
+                    (long) extendedRandom.nextInt(300000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(300000),
+                    (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(3000),
+                    (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(30000),
+                    (long) extendedRandom.nextInt(300000), (long) extendedRandom.nextInt(3000), (long) extendedRandom.nextInt(300000),
+                    extendedRandom.nextLongArr(arrLen, 3000),
+                    extendedRandom.nextLongArr(arrLen, 3000), extendedRandom.nextLongArr(arrLen, 3000),
+                    (long) extendedRandom.nextInt(3000));
+        });
     }
     public static final Class<?> GpsBatteryStatsClass = XposedHelpers.findClass("android.os.connectivity.GpsBatteryStats", XposedBridge.BOOTCLASSLOADER);
 
@@ -213,18 +213,9 @@ public class HookIBattery {
         hookAllMethodsWithCache_Auto(hookClass,"getGpsBatteryStats",new SimpleExecutorWithMode(MODE_BEFORE,param-> param.setResult(generateFakeGpsBatteryStats(Binder.getCallingUid()))));
         hookAllMethodsWithCache_Auto(hookClass,"getWakeLockStats",EMPTY_ARRAYMAP);//android 32
         hookAllMethodsWithCache_Auto(hookClass,"getBluetoothBatteryStats",null);//BluetoothBatteryStats
-        SimpleExecutor resultHealthStatsParceler = param -> {//TODO:Generate instead of throw
-            RemoteException throwBack = new RemoteException();
-            cleanStackTrace(throwBack);
-            param.setResult(null);
-//            param.setThrowable(throwBack);
-
-//            HealthStatsWriter writer = new HealthStatsWriter(new HealthKeys.Constants() );
-//            try {
-//                param.setResult(new HealthStatsParceler(parcel));
-//            }catch (Exception e){
-//                LoggerLog(e);
-//            }
+        SimpleExecutor resultHealthStatsParceler = param -> {
+//            param.setResult(null);
+            param.setResult(getHealthStatsForUidLocked(Binder.getCallingUid()));
         };
         hookAllMethodsWithCache_Auto(hookClass,"takeUidSnapshot",resultHealthStatsParceler);//HealthStatsParceler
         hookAllMethodsWithCache_Auto(hookClass,"takeUidSnapshots",resultHealthStatsParceler);//HealthStatsParceler
@@ -245,4 +236,72 @@ public class HookIBattery {
         hookAllMethodsWithCache_Auto(hookClass,"scheduleUpdate",null);
     }
 
+    private static final Cache<Integer,Boolean> cachedTimerKeyInternal = CacheBuilder.newBuilder()
+            .maximumSize(256)//that's a huge number for our keys
+            .expireAfterWrite(10, TimeUnit.SECONDS)
+            .build();
+    private static final Set<Integer> cachedTimerKey = Collections.newSetFromMap(cachedTimerKeyInternal.asMap());
+    private static final Set<Object/*com.android.server.power.stats.BatteryStatsImpl$Uid*/> uidBatteryStatsSet = newWeakSet();
+    public static final Map<Integer,Object> uidToBatteryStatsImplUidObj = new MapMaker().weakValues().makeMap();
+    public static void hookBatteryStatsImplUid(Class<?> hookClass){
+        new Thread(
+        ){
+            @Override
+            public void run() {
+                super.run();
+                if (!mSystemReady){
+                    try {
+                        sleep(20000);
+                    } catch (InterruptedException e) {
+                        LoggerLog(e);
+                    }
+                }
+                while (true){
+                    for (Object uidObj: uidBatteryStatsSet){
+                        try {
+                            if (uidObj == null){continue;}
+                            int mUid = XposedHelpers.getIntField(uidObj,"mUid");
+                            if (isSystemApp(mUid)){
+                                continue;
+                            }
+                            showObjectFields_noExpand(uidObj,
+                                    "[linearity-datsr:dumps|"
+                                            +(Integer.toHexString(System.identityHashCode(uidObj)))
+                                            +"|"
+                                            +getPackageName(mUid)
+                                            +"]"
+                            );
+                            Map<String,? extends BatteryStats.Uid.Wakelock> map = (Map<String, ? extends BatteryStats.Uid.Wakelock>) XposedHelpers.callMethod(XposedHelpers.getObjectField(uidObj,"mWakelockStats"),"getMap");
+                            for (Map.Entry<String,? extends BatteryStats.Uid.Wakelock> entry:map.entrySet()){
+                                LoggerLog("[linearity-datsr:dumps|"
+                                        +(Integer.toHexString(System.identityHashCode(uidObj)))
+                                        +"|"
+                                        +getPackageName(mUid)
+                                        +"]",entry.getKey() + "|" + entry.getValue()
+                                        );
+                            }
+                        }catch (Exception e){
+                            LoggerLog(e);
+                        }
+                        try {
+                            sleep(3000);
+                        }catch (InterruptedException e){
+                            LoggerLog(e);
+                        }
+                    }
+                    try {
+                        sleep(300000);
+                    }catch (InterruptedException e){
+                        LoggerLog(e);
+                    }
+                }
+            }
+        }.start();
+        hookAllMethodsWithCache_Auto(hookClass,CONSTRUCTOR_METHOD_STRING,new SimpleExecutorWithMode(MODE_AFTER,param -> {
+            uidBatteryStatsSet.add(param.thisObject);
+
+            int mUid = XposedHelpers.getIntField(param.thisObject,"mUid");
+            uidToBatteryStatsImplUidObj.put(mUid,param.thisObject);
+        }),noSystemChecker);
+    }
 }
