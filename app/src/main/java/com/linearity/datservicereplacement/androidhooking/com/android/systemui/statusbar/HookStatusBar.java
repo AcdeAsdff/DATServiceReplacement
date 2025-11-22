@@ -39,7 +39,7 @@ public class HookStatusBar {
 //        listenClass(hookClass,toAvoid);
     }
     public static void hookStatusBarWindowController(Class<?> hookClass){
-        SimpleExecutor paramArg0False=(SimpleExecutor)param -> param.args[0]=false;
+        SimpleExecutor paramArg0False= param -> param.args[0]=false;
         hookAllMethodsWithCache_Auto(hookClass,"setForceStatusBarVisible",paramArg0False,noSystemChecker);
         hookAllMethodsWithCache_Auto(hookClass,"setOngoingProcessRequiresStatusBarVisible",paramArg0False,noSystemChecker);
         hookAllMethodsWithCache_Auto(hookClass,"setLaunchAnimationRunning",paramArg0False,noSystemChecker);
@@ -49,15 +49,23 @@ public class HookStatusBar {
                 v.setVisibility(View.INVISIBLE);
             }
         }),noSystemChecker);
-//        SimpleExecutor invisibleViewInArgs = param -> {
-//            for (Object o:param.args){
-//                if (o instanceof View v){
-//                    v.setVisibility(View.INVISIBLE);
-//                }
-//            }
-//        };
-//        hookAllMethodsWithCache_Auto(hookClass,"addViewToWindow",invisibleViewInArgs,noSystemChecker);
-//        hookAllMethodsWithCache_Auto(hookClass,CONSTRUCTOR_METHOD_STRING,invisibleViewInArgs,noSystemChecker);
+        SimpleExecutor modifyStateParamArg0 = param -> {
+            Object state = param.args[0];
+            XposedHelpers.setBooleanField(state,"mForceStatusBarVisible",false);
+            XposedHelpers.setBooleanField(state,"mOngoingProcessRequiresStatusBarVisible",false);
+        };
+        hookAllMethodsWithCache_Auto(hookClass,"applyForceStatusBarVisibleFlag",modifyStateParamArg0,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"apply",modifyStateParamArg0,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"applyHeight",modifyStateParamArg0,noSystemChecker);
+        SimpleExecutor invisibleViewInArgs = param -> {
+            for (Object o:param.args){
+                if (o instanceof View v){
+                    v.setAlpha(0f);//this works
+                }
+            }
+        };
+        hookAllMethodsWithCache_Auto(hookClass,"addViewToWindow",invisibleViewInArgs,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,CONSTRUCTOR_METHOD_STRING,invisibleViewInArgs,noSystemChecker);
 
 //        LoggerLog("listening class:" + hookClass);
 //        listenClass(hookClass);

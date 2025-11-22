@@ -1,8 +1,10 @@
 package com.linearity.datservicereplacement;
 
-import static com.linearity.datservicereplacement.LibNames.DATZYGISK_LOCAL_PART;
+import static com.linearity.datservicereplacement.LibNames.DATZYGISK_LOCATION_LOCAL_PART;
+import static com.linearity.datservicereplacement.LibNames.DATZYGISK_SYSTEM_SERVER_LOCAL_PART;
 import static com.linearity.datservicereplacement.LoadLibraryUtil.libExists;
 import static com.linearity.datservicereplacement.LoadLibraryUtil.loadLibraryByPath;
+import static com.linearity.datservicereplacement.ReturnIfNonSys.CONSTRUCTOR_METHOD_STRING;
 import static com.linearity.datservicereplacement.ReturnIfNonSys.SyntheticNameResolver.fullResolvedClassName;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.initCellTowers;
 import static com.linearity.datservicereplacement.androidhooking.com.android.server.location.HookLocationManager.LocationGetter.initLocations;
@@ -39,6 +41,7 @@ import com.google.common.collect.MapMaker;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.linearity.datservicereplacement.androidhooking.HookParcel;
+import com.linearity.datservicereplacement.androidhooking.android.view.HookInsetsController;
 import com.linearity.datservicereplacement.androidhooking.com.android.permissioncontroller.HookPermissionManagerUI;
 import com.linearity.datservicereplacement.androidhooking.com.android.providers.HookMediaProvider;
 import com.linearity.datservicereplacement.androidhooking.com.android.server.accessibility.HookAccessibility;
@@ -284,14 +287,18 @@ public class StartHook implements IXposedHookLoadPackage {
                     && !(Objects.equals(lpparam.processName,"system"))//in fact they have no name
                     && lpparam.processName != null){mSystemReady = true;}
 
-            if (lpparam.appInfo != null){
-                if ((lpparam.appInfo.uid == 1000) && Objects.equals(null,lpparam.processName)){
-                    LoggerLog("loading lib"+DATZYGISK_LOCAL_PART+" for:null|" + lpparam.packageName);
-                    loadLibraryByPath(DATZYGISK_LOCAL_PART,null);
+            {
+                if (lpparam.appInfo != null) {
+                    if ((lpparam.appInfo.uid == 1000) && Objects.equals(null, lpparam.processName)) {
+                        LoggerLog("loading lib" + DATZYGISK_LOCATION_LOCAL_PART + " for:null|" + lpparam.packageName);
+                        loadLibraryByPath(DATZYGISK_LOCATION_LOCAL_PART, null);
+                        LoggerLog("loading lib" + DATZYGISK_SYSTEM_SERVER_LOCAL_PART + " for:null|" + lpparam.packageName);
+                        loadLibraryByPath(DATZYGISK_SYSTEM_SERVER_LOCAL_PART, null);
+                    }
                 }
-            }
-            if (libExists(DATZYGISK_LOCAL_PART)){
-                hookLocation = true;
+                if (libExists(DATZYGISK_LOCATION_LOCAL_PART)) {
+                    hookLocation = true;
+                }
             }
             //try to get some classes.
             {
@@ -413,6 +420,7 @@ public class StartHook implements IXposedHookLoadPackage {
         HookAppOpsService.doHook();
 
         HookWindowManagerService.doHook();
+        HookInsetsController.doHook();
         HookStatusBar.doHook();
         HookScreenShot.doHook();
         HookSystemUIApplication.doHook();
@@ -550,31 +558,20 @@ public class StartHook implements IXposedHookLoadPackage {
 
     //all classLoaders are belong to me
     public static void listenClassLoader(){
-        SimpleExecutorWithMode resultClass = new SimpleExecutorWithMode(MODE_AFTER, param -> {
-            ClassLoader classLoader = (ClassLoader) param.thisObject;
-            hookForClassLoader(classLoader);
-            Class<?> result = (Class<?>) param.getResult();
-            if (result != null){
-
-                String classNameResolved = fullResolvedClassName(result);
-                String classNameNotResolved = result.getName();
-
-                executeWithClassName(classNameResolved,result,classLoader);
-                executeWithClassName(classNameNotResolved,result,classLoader);
-            }
-        });
         SimpleExecutorWithMode resultNotUsed = new SimpleExecutorWithMode(MODE_AFTER, param -> {
             ClassLoader classLoader = (ClassLoader) param.thisObject;
             hookForClassLoader(classLoader);
         });
+
+        SimpleExecutorWithMode[] resultClassRef = new SimpleExecutorWithMode[1];
         ClassHookExecutor[] ex_classLoaderArr = new ClassHookExecutor[1];
         ex_classLoaderArr[0] = hookClass -> {
             if (isHookedPoolRegistered(hookClass,hookedClassLoaderPool)){return;}
-            hookAllMethodsWithCache_Auto(hookClass,"findClass",resultClass,noSystemChecker);
-            hookAllMethodsWithCache_Auto(hookClass,"defineClass",resultClass,noSystemChecker);
-            hookAllMethodsWithCache_Auto(hookClass,"findSystemClass",resultClass,noSystemChecker);
-            hookAllMethodsWithCache_Auto(hookClass,"findBootstrapClassOrNull",resultClass,noSystemChecker);
-            hookAllMethodsWithCache_Auto(hookClass,"findLoadedClass",resultClass,noSystemChecker);
+            hookAllMethodsWithCache_Auto(hookClass,"findClass",resultClassRef[0],noSystemChecker);
+            hookAllMethodsWithCache_Auto(hookClass,"defineClass",resultClassRef[0],noSystemChecker);
+            hookAllMethodsWithCache_Auto(hookClass,"findSystemClass",resultClassRef[0],noSystemChecker);
+            hookAllMethodsWithCache_Auto(hookClass,"findBootstrapClassOrNull",resultClassRef[0],noSystemChecker);
+            hookAllMethodsWithCache_Auto(hookClass,"findLoadedClass",resultClassRef[0],noSystemChecker);
             hookAllMethodsWithCache_Auto(hookClass,"getParent",new SimpleExecutorWithMode(MODE_AFTER, param -> {
                 ClassLoader classLoader = (ClassLoader) param.getResult();
                 if (classLoader != null){
@@ -588,26 +585,49 @@ public class StartHook implements IXposedHookLoadPackage {
                 }
             }),noSystemChecker);
             hookAllMethodsWithCache_Auto(hookClass,"findLibrary",resultNotUsed,noSystemChecker);
+//            hookAllMethodsWithCache_Auto(hookClass,
+//                    CONSTRUCTOR_METHOD_STRING,
+//                    new SimpleExecutorWithMode(MODE_AFTER,param -> hookForClassLoader((ClassLoader) param.thisObject)),
+//                    noSystemChecker
+//            );
         };
-        ClassHookExecutor ex_classLoader = ex_classLoaderArr[0];
+        resultClassRef[0] = new SimpleExecutorWithMode(MODE_AFTER, param -> {
+            ClassLoader classLoader = (ClassLoader) param.thisObject;
+            hookForClassLoader(classLoader);
+            Class<?> result = (Class<?>) param.getResult();
+            if (result != null){
 
-        classesAndHooks.put("java.lang.BootClassLoader",ex_classLoader);
-        classesAndHooks.put("java.lang.ClassLoader",ex_classLoader);
-        classesAndHooks.put("java.security.SecureClassLoader",ex_classLoader);
-        classesAndHooks.put("java.net.URLClassLoader",ex_classLoader);
-        classesAndHooks.put("java.net.FactoryURLClassLoader",ex_classLoader);
-        classesAndHooks.put("java.util.ResourceBundle$RBClassLoader",ex_classLoader);
+                String classNameResolved = fullResolvedClassName(result);
+                String classNameNotResolved = result.getName();
 
-        classesAndHooks.put("org.chromium.base.WrappedClassLoader",ex_classLoader);
-        classesAndHooks.put("org.chromium.base.BundleUtils$SplitCompatClassLoader",ex_classLoader);
+                executeWithClassName(classNameResolved,result,classLoader);
+                executeWithClassName(classNameNotResolved,result,classLoader);
+                if (ClassLoader.class.isAssignableFrom(result)){
+                    classesAndHooks.put(classNameResolved,ex_classLoaderArr[0]);
+                    classesAndHooks.put(classNameNotResolved,ex_classLoaderArr[0]);
+                    ex_classLoaderArr[0].startHookClass(result);
+                }
+            }
+        });
 
-        classesAndHooks.put("android.icu.impl.ClassLoaderUtil$BootstrapClassLoader",ex_classLoader);
-        classesAndHooks.put("android.app.LoadedApk.WarningContextClassLoader",ex_classLoader);
-//
-        classesAndHooks.put("dalvik.system.BaseDexClassLoader",ex_classLoader);
-        classesAndHooks.put("dalvik.system.PathClassLoader",ex_classLoader);
-        classesAndHooks.put("dalvik.system.DexClassLoader",ex_classLoader);
-        classesAndHooks.put("dalvik.system.DelegateLastClassLoader",ex_classLoader);
+        classesAndHooks.put("java.lang.BootClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("java.lang.ClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("java.security.SecureClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("java.net.URLClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("java.net.FactoryURLClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("java.util.ResourceBundle$RBClassLoader",ex_classLoaderArr[0]);
+
+        classesAndHooks.put("org.chromium.base.WrappedClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("org.chromium.base.BundleUtils$SplitCompatClassLoader",ex_classLoaderArr[0]);
+
+        classesAndHooks.put("android.icu.impl.ClassLoaderUtil$BootstrapClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("android.app.LoadedApk.WarningContextClassLoader",ex_classLoaderArr[0]);
+
+        classesAndHooks.put("dalvik.system.BaseDexClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("dalvik.system.PathClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("dalvik.system.DexClassLoader",ex_classLoaderArr[0]);
+        classesAndHooks.put("dalvik.system.DelegateLastClassLoader",ex_classLoaderArr[0]);
+
     }
 
     public static boolean calledOnStartedFlag = false;
@@ -633,7 +653,7 @@ public class StartHook implements IXposedHookLoadPackage {
 
     }
     private static final String[] constCommands = {
-            "resetprop -n dalvik.vm.usejit false",//hope to avoid unloading
+            "resetprop -n dalvik.vm.usejit false",
 
             //but now we check unlock stats via keystore,i can only block it by disable accessing to that service
             "resetprop -n ro.boot.vbmeta.device_state locked",
@@ -780,5 +800,6 @@ public class StartHook implements IXposedHookLoadPackage {
         }
         return false;
     }
+
 }
 

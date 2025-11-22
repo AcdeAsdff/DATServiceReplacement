@@ -152,6 +152,10 @@ public class HookWindowManagerService {
 //        },noSystemChecker);
         hookAllMethodsWithCache_Auto(hookClass,"isFullyTransparentAllowed",true,noSystemChecker);
         hookAllMethodsWithCache_Auto(hookClass,"topAppHidesSystemBar",true,noSystemChecker);
+        hookAllMethodsWithCache_Auto(hookClass,"updateSystemBarsLw",(SimpleExecutor)param -> {
+            showBefore.simpleExecutor.execute(param);
+        },noSystemChecker);
+        LoggerLog("hooked:" + hookClass);
 //        hookAllMethodsWithCache_Auto(InsetsSource.class,"getFlags",(SimpleExecutor) param -> {
 //            InsetsSource thisObj = (InsetsSource) param.thisObject;
 //            int flags = XposedHelpers.getIntField(thisObj,"mFlags");
@@ -471,14 +475,15 @@ public class HookWindowManagerService {
 //                param.setResult(true);
 //            }
 //        },noSystemChecker);
-        SimpleExecutor forIsVisible = param -> {
-            if (decideWindowStateInvisible(param.thisObject)){
-                param.setResult(false);
-            }
-        };
-        hookAllMethodsWithCache_Auto(hookClass,"isVisibleRequested",forIsVisible,noSystemChecker);
-        hookAllMethodsWithCache_Auto(hookClass,"isVisible",forIsVisible,noSystemChecker);
-        hookAllMethodsWithCache_Auto(hookClass,"isVisibleNow",forIsVisible,noSystemChecker);
+
+//        SimpleExecutor forIsVisible = param -> {
+//            if (decideWindowStateInvisible(param.thisObject)){
+//                param.setResult(false);
+//            }
+//        };
+//        hookAllMethodsWithCache_Auto(hookClass,"isVisibleRequested",forIsVisible,noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,"isVisible",forIsVisible,noSystemChecker);
+//        hookAllMethodsWithCache_Auto(hookClass,"isVisibleNow",forIsVisible,noSystemChecker);
 
         hookAllMethodsWithCache_Auto(hookClass,"isSecureLocked",false,noSystemChecker);
 //        hookAllMethodsWithCache_Auto(hookClass,"getDisableFlags",(SimpleExecutor)param -> checkAndModifyStatusBarWindowState(param.thisObject),noSystemChecker);
